@@ -106,6 +106,7 @@ class Minority_Game_Prev_Best_Strat_Agent(Minority_Game_Agent):
         been run. This agent must save the best strategy from the previous game, if there
         was one, and use it throughout this game.
         """
+        print(self.best_strategy_index)
 
 
         self.prev_game_best_strategy_index = self.best_strategy_index
@@ -133,7 +134,6 @@ class Minority_Game_Spying_Agent(Minority_Game_Agent):
     def __init__(self, strategies, starting_patch):
         super().__init__(strategies, starting_patch)
         self.label += '-Spy'
-        self.has_selection = False
 
     def get_best_strategy_score(self):
         return None
@@ -154,10 +154,6 @@ class Minority_Game_Spying_Agent(Minority_Game_Agent):
 
         self.guess = 0 if number_of_zeros < len(all_agents) else 1
         return self.guess
-
-    #todo
-    ##adding funcitonality to get spying agents to spy on each other
-    ##need to add a flag to see if there is 
 
     def update_strategy_scores(self, _history_as_index, _winner):
         # No strategies to update
@@ -324,6 +320,7 @@ class Minority_Game_World(World):
         #                                         Minority_Game_World.nbr_spying_strat_agents - 1}
         # Make first and last Agents into random agents
         Minority_Game_World.random_agent_ids = {0, Minority_Game_World.nbr_agents - 1}
+        print(Minority_Game_World.random_agent_ids)
         # [prev strat, spying strat, rest]
 
         # Generate a random initial history
