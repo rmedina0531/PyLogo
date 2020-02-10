@@ -92,9 +92,12 @@ class SimpleGUI:
         self.model_gui_elements = model_gui_elements
 
         screen_shape_width_height = (SCREEN_PIXEL_WIDTH(), SCREEN_PIXEL_HEIGHT())
-        gui.WINDOW = self.make_window(caption, model_gui_elements, screen_shape_width_height, bounce=bounce, fps=fps)
 
         pg.init()
+        #pg.init causes program crash if called after the following line
+        gui.WINDOW = self.make_window(caption, model_gui_elements, screen_shape_width_height, bounce=bounce, fps=fps)
+
+        # pg.init()
 
         # All graphics are drawn to gui.SCREEN, which is a global variable.
         gui.SCREEN = pg.display.set_mode(screen_shape_width_height)

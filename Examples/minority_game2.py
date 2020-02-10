@@ -19,7 +19,9 @@ class Minority_Game_Agent(Agent):
 
         self.strategies = strategies
         self.guess = None
+        self.best_strategy_index = None
         self.init_agent(starting_patch)
+
 
     # noinspection PyAttributeOutsideInit
     def init_agent(self, starting_patch):
@@ -67,7 +69,6 @@ class Minority_Game_Agent(Agent):
                 # noinspection PyAttributeOutsideInit
                 self.best_strategy_index = strategy_id
 
-
 class Minority_Game_Random_Agent(Minority_Game_Agent):
 
     def __init__(self, strategies, starting_patch):
@@ -105,15 +106,23 @@ class Minority_Game_Prev_Best_Strat_Agent(Minority_Game_Agent):
         been run. This agent must save the best strategy from the previous game, if there
         was one, and use it throughout this game.
         """
+        print(self.best_strategy_index)
+
+
+        self.prev_game_best_strategy_index = self.best_strategy_index
         super().init_agent(starting_patch)
-        ...
 
     def make_selection(self, history_index):
         """
         You fill in this part. Instead of using self.best_strategy_index
         use the final best_strategy_index from the previous game.
         """
-        self.guess = ...
+
+        #will act like a normal Agent if it does not have a prev best strategie
+        if self.prev_game_best_strategy_index is None:
+            self.guess = super().make_selection(history_index)
+        else:
+            self.guess = self.strategies[self.prev_game_best_strategy_index][history_index]
         return self.guess
 
 
@@ -136,7 +145,14 @@ class Minority_Game_Spying_Agent(Minority_Game_Agent):
         """
         # noinspection PyUnusedLocal
         all_agents = World.agents
-        self.guess = ...
+        number_of_zeros = 0
+        for agent in all_agents:
+            # number_of_zeros += 1 if agent.make_selection(history_index) == 0 else 0
+            if not type(agent) is type(self):
+                if agent.make_selection(history_index) == 0:
+                    number_of_zeros += 1
+
+        self.guess = 0 if number_of_zeros < len(all_agents) else 1
         return self.guess
 
     def update_strategy_scores(self, _history_as_index, _winner):
@@ -150,10 +166,15 @@ class Minority_Game_World(World):
     copy_agents = None
 
     nbr_agents = None
+    nbr_last_strat_agents = None
+    nbr_spying_strat_agents = None
     one_step = None
     steps_to_win = None
+    total_agents = None
 
     random_agent_ids = None
+    last_strat_ids = None
+    spying_strat_ids = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -188,9 +209,19 @@ class Minority_Game_World(World):
                                         strategies_per_agent * agent_id:strategies_per_agent * (agent_id + 1)]
 
             # Which agent class (or subclass) is this agent?
-            agent_class = Minority_Game_Random_Agent if agent_id in Minority_Game_World.random_agent_ids else \
-                Minority_Game_Agent
+            # agent_class = Minority_Game_Random_Agent if agent_id in Minority_Game_World.random_agent_ids else \
+            #               Minority_Game_Agent
+
+            if agent_id in Minority_Game_World.last_strat_ids:
+                agent_class = Minority_Game_Prev_Best_Strat_Agent
+            elif agent_id in Minority_Game_World.spying_strat_ids:
+                agent_class = Minority_Game_Spying_Agent
+            elif agent_id in Minority_Game_World.random_agent_ids:
+                agent_class = Minority_Game_Random_Agent
+            else:
+                agent_class = Minority_Game_Agent
             # Create the agent
+            # agent_class defined on world creation
             agent_class(strategies_for_this_agent, starting_patch)
 
     def get_starting_patch(self, agent_id, agent_separation):
@@ -248,12 +279,49 @@ class Minority_Game_World(World):
 
         # This is the normal setup.
         Minority_Game_World.nbr_agents = SimEngine.get_gui_value(NBR_AGENTS)
+        Minority_Game_World.nbr_last_strat_agents = SimEngine.get_gui_value(PREV_STRAT_AGENTS)
+        Minority_Game_World.nbr_spying_strat_agents = SimEngine.get_gui_value(SPY_STRAT_AGENTS)
+
         if Minority_Game_World.nbr_agents % 2 == 0:
             Minority_Game_World.nbr_agents += (1 if Minority_Game_World.nbr_agents < gui.WINDOW[NBR_AGENTS].Range[1]
                                                else (-1))
             gui.WINDOW[NBR_AGENTS].update(value=Minority_Game_World.nbr_agents)
+
+        ##agent creation stuff
+
+        #make the list of indexes of the various strategies
+        index = 1
+
+        #makes index from 1 - number of agents
+        if Minority_Game_World.last_strat_ids is None:
+            Minority_Game_World.last_strat_ids = []
+
+        if Minority_Game_World.spying_strat_ids is None:
+            Minority_Game_World.spying_strat_ids = []
+
+        # Minority_Game_World.last_strat_ids = [] if Minority_Game_World.last_strat_ids is None else None
+        # Minority_Game_World.spying_strat_ids = [] if Minority_Game_World.spying_strat_ids is None else None
+
+
+        while len(Minority_Game_World.last_strat_ids) < Minority_Game_World.nbr_last_strat_agents:
+            Minority_Game_World.last_strat_ids.append(index)
+            index += 1
+
+        #makes list of indexes from the last one in last strat to total number in spying strat
+        while len(Minority_Game_World.spying_strat_ids) < Minority_Game_World.nbr_spying_strat_agents:
+            Minority_Game_World.spying_strat_ids.append(index)
+            index += 1
+
+        # Minority_Game_World.last_strat_ids = range(1, Minority_Game_World.nbr_last_strat_agents + 1)
+
+
+        # get number of agents to be using the Spying method and add the ID to this array
+        # Minority_Game_World.spying_strat_ids = {Minority_Game_World.nbr_last_strat_agents,
+        #                                         Minority_Game_World.nbr_spying_strat_agents - 1}
+        # Make first and last Agents into random agents
         Minority_Game_World.random_agent_ids = {0, Minority_Game_World.nbr_agents - 1}
         print(Minority_Game_World.random_agent_ids)
+        # [prev strat, spying strat, rest]
 
         # Generate a random initial history
         self.history_length = SimEngine.get_gui_value(HISTORY_LENGTH)
@@ -285,32 +353,44 @@ HISTORY_LENGTH = 'History length'
 NBR_AGENTS = 'Number of agents'
 STEPS_TO_WIN = 'Steps to win'
 STRATEGIES_PER_AGENT = 'Strategies per agent'
+PREV_STRAT_AGENTS = 'Agents using previous strat'
+SPY_STRAT_AGENTS = 'Agents using spyting stratagie'
 
 import PySimpleGUI as sg
 
-gui_left_upper = [[sg.Text(HISTORY_LENGTH, tooltip='The length of the history record'),
-                   sg.Slider(key=HISTORY_LENGTH, range=(0, 8), default_value=5,
-                             size=(10, 20), orientation='horizontal',
-                             tooltip='The length of the history record')],
+gui_elements = [[sg.Text(HISTORY_LENGTH, tooltip='The length of the history record'),
+                 sg.Slider(key=HISTORY_LENGTH, range=(0, 8), default_value=5,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The length of the history record')],
 
-                  [sg.Text(NBR_AGENTS,
-                           tooltip='The number of agents. \n(Must be an odd number.\nChecked during setup.)'),
-                   sg.Slider(key=NBR_AGENTS, range=(1, 35), default_value=25,
-                             size=(10, 20), orientation='horizontal',
-                             tooltip='The number of agents. \n(Must be an odd number.\nChecked during setup.)')],
+                [sg.Text(NBR_AGENTS,
+                         tooltip='The number of agents. \n(Must be an odd number.\nChecked during setup.)'),
+                 sg.Slider(key=NBR_AGENTS, range=(1, 35), default_value=25,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The number of agents. \n(Must be an odd number.\nChecked during setup.)')],
 
-                  [sg.Text(STRATEGIES_PER_AGENT, tooltip='The number of strategies generated for each agent'),
-                   sg.Slider(key=STRATEGIES_PER_AGENT, range=(1, 200), default_value=100,
-                             size=(10, 20), orientation='horizontal',
-                             tooltip='The number of strategies generated for each agent')],
+                [sg.Text(STRATEGIES_PER_AGENT, tooltip='The number of strategies generated for each agent'),
+                 sg.Slider(key=STRATEGIES_PER_AGENT, range=(1, 200), default_value=100,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The number of strategies generated for each agent')],
 
-                  [sg.Text(STEPS_TO_WIN, tooltip='The number of steps required to win'),
-                   sg.Slider(key=STEPS_TO_WIN, range=(1, 500), default_value=50, resolution=25,
-                             size=(10, 20), orientation='horizontal',
-                             tooltip='The number of steps required to win')],
-                  ]
+                [sg.Text(STEPS_TO_WIN, tooltip='The number of steps required to win'),
+                 sg.Slider(key=STEPS_TO_WIN, range=(1, 500), default_value=50, resolution=25,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The number of steps required to win')],
+
+                [sg.Text(PREV_STRAT_AGENTS, tooltip='The number of agents using the prevous strat'),
+                 sg.Slider(key=PREV_STRAT_AGENTS, range=(0, 25), default_value=0,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The number of agents using the prevous strat')],
+
+                [sg.Text(SPY_STRAT_AGENTS, tooltip='The number of agents using the spying strat'),
+                 sg.Slider(key=SPY_STRAT_AGENTS, range=(0, 25), default_value=0,
+                           size=(10, 20), orientation='horizontal',
+                           tooltip='The number of agents using the spying strat')],
+                ]
 
 if __name__ == "__main__":
     from core.agent import PyLogo
 
-    PyLogo(Minority_Game_World, 'Minority game', gui_left_upper, agent_class=Minority_Game_Agent, fps=6)
+    PyLogo(Minority_Game_World, 'Minority game', gui_elements, agent_class=Minority_Game_Agent, fps=6)
