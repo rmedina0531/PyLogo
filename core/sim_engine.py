@@ -56,6 +56,12 @@ class SimEngine:
         value = SimEngine.values.get(key, None)
         return int(value) if isinstance(value, float) and value == int(value) else value
 
+    @staticmethod
+    def set_gui_value(key, value):
+        gui.WINDOW[key].update(value)
+        gui.WINDOW.Refresh()
+        (SimEngine.event, SimEngine.values) = gui.WINDOW.read(timeout=10)
+
     def model_loop(self):
         # Run this loop until the model signals it is finished or until the user stops it by pressing the Stop button.
         while True:
