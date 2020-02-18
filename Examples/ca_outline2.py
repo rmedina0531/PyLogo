@@ -26,13 +26,14 @@ class CA_World(OnOffWorld):
         # The three digits are the rule components and the keys to the switches.
         # To see it, try: print(self.pos_to_switch) after executing the next line.
         # The function bin_str() is defined in utils.py
-
+        self._rules = ['000','001','010','011','100','101','110','111']
         self.pos_to_switch = {2**i: bin_str(i, 3) for i in range(8)}
         # print(self.pos_to_switch)
 
         # The rule number used for this run, initially set to 110 as the default rule.
         # You might also try rule 165.
-        self.rule_nbr = 110
+        self.rule_nbr = 212
+
         # Set the switches and the binary representation of self.rule_nbr.
         self.set_switches_from_rule_nbr()
         self.set_binary_nbr_from_rule_nbr()
@@ -40,6 +41,8 @@ class CA_World(OnOffWorld):
 
         self.ca_lines: List[List[int]] = []
         gui.WINDOW['rows'].update(value=len(self.ca_lines))
+
+        # self.set_switches_from_rule_nbr()
 
     def build_initial_line(self):
         """
@@ -62,7 +65,15 @@ class CA_World(OnOffWorld):
         Translate the on/off of the switches to a rule number.
         This is the inverse of set_switches_from_rule_nbr(), but it doesn't set the 'Rule_nbr' Slider.
         """
-        ...
+
+        int_bin = {'000':1, '001':2, '010':4, '011':8, '100':16, '101':32, '110':64, '111':128}
+        output = 0
+        for r in self._rules:
+            if SimEngine.get_gui_value(r) == True:
+                output += int_bin[r]
+        self.rule_nbr = output
+
+
 
     def handle_event_and_values(self):
         """
@@ -72,14 +83,31 @@ class CA_World(OnOffWorld):
 
         This is the function that will trigger all the code you write this week
         """
-        if SimEngine.event in ...:
-            ...
+
+        print(SimEngine.event)
+
+        _events = ['000', '001', '010', '011', '100', '101', '110', '111', 'Rule_nbr']
+
+        # strategies_per_agent = SimEngine.get_gui_value(STRATEGIES_PER_AGENT)
+
+        # if SimEngine.event in _events:
+        #     print(SimEngine.get_gui_value(SimEngine.event))
+        #     SimEngine.set_gui_value('000', True)
+        #     print(SimEngine.get_gui_value('000'))
+        # if SimEngine.event in ...:
+        #     ...
 
     def make_switches_and_rule_nbr_consistent(self):
+
         """
         Make the Slider, the switches, and the bin number consistent: all contain self.rule_nbr.
         """
-        ...
+        self.set_binary_nbr_from_rule_nbr()
+        self.set_slider_from_rule_nbr()
+        self.set_binary_nbr_from_rule_nbr()
+
+    def set_slider_from_rule_nbr(self):
+        SimEngine.set_gui_value('Rule_nbr', self.rule_nbr)
 
     def set_binary_nbr_from_rule_nbr(self):
         """
@@ -89,7 +117,10 @@ class CA_World(OnOffWorld):
 
         Use gui.WINDOW['bin_string'].update(value=new_value) to update the value of the widget.
         """
-        ...
+
+        binary = self.int_to_8_bit_binary(self.rule_nbr, False)
+        binary_str = ''.join(binary)
+        SimEngine.set_gui_value('bin_string', binary)
 
     def set_display_from_lines(self):
         """
@@ -108,7 +139,22 @@ class CA_World(OnOffWorld):
 
         This is the inverse of get_rule_nbr_from_switches().
         """
-        ...
+        for rule_switch, enabled in zip(self._rules, self.int_to_8_bit_binary(self.rule_nbr)):
+            SimEngine.set_gui_value(rule_switch, True if enabled=='1' else False)
+
+    def int_to_8_bit_binary(self, input, rev=True):
+        output = "{0:b}".format(input)
+        output2 = list(output)
+        output2.reverse()
+        while len(output2) < 8:
+            output2.append('0')
+
+        #reverse to alignt to rules and index
+        if rev:
+            return output2
+        else:
+            output2.reverse()
+            return output2
 
     def setup(self):
         """
@@ -123,7 +169,11 @@ class CA_World(OnOffWorld):
         Copy those values to the bottom row of patches.
         (The bottom row is row gui.PATCH_ROWS - 1.)
         """
-        ...
+        # print(self.int_to_8_bit_binary(self.rule_nbr))
+        # self.get_rule_nbr_from_switches()
+        # self.set_binary_nbr_from_rule_nbr()
+
+        self.set_slider_from_rule_nbr()
 
     def step(self):
         """
