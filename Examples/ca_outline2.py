@@ -66,14 +66,24 @@ class CA_World(OnOffWorld):
         This is the inverse of set_switches_from_rule_nbr(), but it doesn't set the 'Rule_nbr' Slider.
         """
 
-        int_bin = {'000':1, '001':2, '010':4, '011':8, '100':16, '101':32, '110':64, '111':128}
-        output = 0
-        for r in self._rules:
-            if SimEngine.get_gui_value(r) == True:
-                output += int_bin[r]
-        self.rule_nbr = output
+        # int_bin = {'000':1, '001':2, '010':4, '011':8, '100':16, '101':32, '110':64, '111':128}
+        # output = 0
+        # for r in self._rules:
+        #     if SimEngine.get_gui_value(r) == True:
+        #         output += int_bin[r]
+        # self.rule_nbr = output
 
 
+        output = []
+        for rule in self._rules:
+            output.append(str('1' if SimEngine.get_gui_value(rule) == True else '0'))
+
+        self.rule_nbr = self.convert_bin_to_int(output)
+
+    def convert_bin_to_int(self, input):
+        #using join() + comprehension
+        #converting binary list to integer
+        res = int("".join(str(x) for x in input), 2)
 
     def handle_event_and_values(self):
         """
