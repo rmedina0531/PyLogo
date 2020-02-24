@@ -67,6 +67,7 @@ class CA_World(OnOffWorld):
         """
 
         # int_bin = {'000':1, '001':2, '010':4, '011':8, '100':16, '101':32, '110':64, '111':128}
+        # r = int_bin['010']
         # output = 0
         # for r in self._rules:
         #     if SimEngine.get_gui_value(r) == True:
@@ -75,15 +76,11 @@ class CA_World(OnOffWorld):
 
 
         output = []
+
         for rule in self._rules:
-            output.append(str('1' if SimEngine.get_gui_value(rule) == True else '0'))
-
-        self.rule_nbr = self.convert_bin_to_int(output)
-
-    def convert_bin_to_int(self, input):
-        #using join() + comprehension
-        #converting binary list to integer
-        res = int("".join(str(x) for x in input), 2)
+            output.append(str('1' if SimEngine.get_gui_value(rule) else '0'))
+        output.reverse()
+        self.rule_nbr = int("".join(input), 2)
 
     def handle_event_and_values(self):
         """
@@ -94,9 +91,9 @@ class CA_World(OnOffWorld):
         This is the function that will trigger all the code you write this week
         """
 
-        print(SimEngine.event)
+        # print(SimEngine.event)
 
-        _events = ['000', '001', '010', '011', '100', '101', '110', '111', 'Rule_nbr']
+        # _events = ['000', '001', '010', '011', '100', '101', '110', '111', 'Rule_nbr']
 
         # strategies_per_agent = SimEngine.get_gui_value(STRATEGIES_PER_AGENT)
 
@@ -105,16 +102,22 @@ class CA_World(OnOffWorld):
         #     SimEngine.set_gui_value('000', True)
         #     print(SimEngine.get_gui_value('000'))
         # if SimEngine.event in ...:
-        #     ...
+        # self.make_switches_and_rule_nbr_consistent(SimEngine.event)
 
-    def make_switches_and_rule_nbr_consistent(self):
+    def make_switches_and_rule_nbr_consistent(self, event):
 
         """
         Make the Slider, the switches, and the bin number consistent: all contain self.rule_nbr.
         """
-        self.set_binary_nbr_from_rule_nbr()
-        self.set_slider_from_rule_nbr()
-        self.set_binary_nbr_from_rule_nbr()
+        if event == 'Rule_nbr':
+            self.rule_nbr = SimEngine.get_gui_value(event)
+            self.set_switches_from_rule_nbr()
+            self.set_binary_nbr_from_rule_nbr()
+
+        if event in self._rules:
+            self.rule_nbr = self.get_rule_nbr_from_switches()
+            self.set_slider_from_rule_nbr()
+            self.set_binary_nbr_from_rule_nbr()
 
     def set_slider_from_rule_nbr(self):
         SimEngine.set_gui_value('Rule_nbr', self.rule_nbr)
@@ -182,8 +185,8 @@ class CA_World(OnOffWorld):
         # print(self.int_to_8_bit_binary(self.rule_nbr))
         # self.get_rule_nbr_from_switches()
         # self.set_binary_nbr_from_rule_nbr()
-
-        self.set_slider_from_rule_nbr()
+        self.get_rule_nbr_from_switches()
+        print(self.rule_nbr)
 
     def step(self):
         """
