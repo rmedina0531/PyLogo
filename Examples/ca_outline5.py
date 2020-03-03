@@ -1,12 +1,16 @@
-'''Version of the CA that does not implement the justification on each iteration'''
+'''Version that does implement justification on each iteration
+build initial line has been changed accordingly'''
 
 import core.gui as gui
 from core.gui import HOR_SEP
 from core.on_off import on_off_left_upper, OnOffPatch, OnOffWorld
 from core.sim_engine import SimEngine
 from core.utils import bin_str
-
 import random
+
+from copy import copy
+
+from random import choice
 
 from typing import List
 
@@ -48,18 +52,11 @@ class CA_World(OnOffWorld):
         # a state of the CA, i.e., all the cells in the line. self.ca_list contains the entire
         # history of the CA.
         self.ca_lines: List[List[int]] = []
-        self.ca_left_lines: List[List[int]] = []
-        self.ca_right_lines: List[List[int]] = []
 
 
         #For testing --- REMOVE
         self.ca_lines.append([])
-        while len(self.ca_lines[0]) < 151:
-            self.ca_lines[0].append(0)
-
-        self.ca_lines[0][75] = 1
-        self.ca_left_lines.append([0,0])
-        self.ca_right_lines.append([0,0])
+        self.ca_lines[0] = [0,0,1,0,0]
         #end of test code
 
 
@@ -70,18 +67,40 @@ class CA_World(OnOffWorld):
         """
         Construct the initial CA line
         """
+        # self.init = SimEngine.gui_get('init')
+        # if self.init == 'Random':
+        #     # Set the initial row to random 1/0.
+        #     # You complete this line.
+        #     line = "".join(random.choice('10') for i in range(self.ca_display_size))
+        # else:
+        #     line = [0] * self.ca_display_size
+        #     col = 0 if self.init == 'Left' else \
+        #           CA_World.ca_display_size // 2 if self.init == 'Center' else \
+        #           CA_World.ca_display_size - 1   # self.init == 'Right'
+        #     line[col] = 1
+        # return line
+
+
+        #if justification is used to display it is unnecessary to make the initial line as wide as the gui except
+        #when random
         self.init = SimEngine.gui_get('init')
         if self.init == 'Random':
             # Set the initial row to random 1/0.
             # You complete this line.
             line = "".join(random.choice('10') for i in range(self.ca_display_size))
+
+            # check to see if a zero needs to be added to either end
+            # useful for the rule 001 or 100
+            if line[:2] == [0, 1]:
+                line.insert(0, 0)
+
+            if line[-2:] == [1, 0]:
+                line.append(0)
+
+            return line
+
         else:
-            line = [0] * self.ca_display_size
-            col = 0 if self.init == 'Left' else \
-                  CA_World.ca_display_size // 2 if self.init == 'Center' else \
-                  CA_World.ca_display_size - 1   # self.init == 'Right'
-            line[col] = 1
-        return line
+            return [0,0,1,0,0]
 
     def get_rule_nbr_from_switches(self):
         """
@@ -160,29 +179,49 @@ class CA_World(OnOffWorld):
         Copy values from self.ca_lines to the patches. One issue is dealing with
         cases in which there are more or fewer lines than Patch row.
         """
-
-        #does not fill up the entire screen
-
-
         y = 1
-        limy = len(self.ca_lines) + 150
+        maxlin = CA_World.ca_display_size - 1
+        limy = len(self.ca_lines) + maxlin
         for i in self.ca_lines:
             x = 1
-            if limy >= 150:
-                limx = len(i) + 150
-                for j in range(len(i)):
-                    if limx >= 150:
-                        b = bool(i[j])
-                        patch = self.pixel_tuple_to_patch(((150 - len(i) + x) * 4, (150 - len(self.ca_lines) + y) * 4))
-                        patch.set_on_off(b)
+            if limy >= maxlin:
+                if SimEngine.gui_get('init') == "Right":  # Right
+                    limx = len(i) + maxlin + 2
+                    for j in range(len(i) - 2):
+                        if limx >= maxlin:
+                            b = bool(i[j])
+                            self.pixel_tuple_to_patch(
+                                ((maxlin - len(i) + 2 + x) * 4, (maxlin - len(self.ca_lines) + y) * 4)).set_on_off(b)
+                            x += 1
+                        else:
+                            limx -= 1
+                elif SimEngine.gui_get('init') == "Left":  # Left
+                    limx = 0
+                    for j in range(len(i) - 2):
+                        if limx <= maxlin + 2:
+                            b = bool(i[j])
+                            self.pixel_tuple_to_patch(((x - 3) * 4, (maxlin - len(self.ca_lines) + y) * 4)).set_on_off(
+                                b)
+                            x += 1
+                            limx += 1
+                else:  # Center and Random
+                    limx = int((len(i) - maxlin) / 2)
+                    k = 0
+                    for j in range(len(i)):
+                        if limx < 0:
+                            b = bool(i[j])
+                            self.pixel_tuple_to_patch(((maxlin - len(i) + x - 1 + limx) * 4,
+                                                       (maxlin - len(self.ca_lines) + y) * 4)).set_on_off(b)
+                        else:
+                            if k < maxlin + 1:
+                                b = bool(i[j + limx])
+                                self.pixel_tuple_to_patch((k * 4,
+                                                           (maxlin - len(self.ca_lines) + y) * 4)).set_on_off(b)
                         x += 1
-                    else:
-                        limx -= 1
-                    # print(limx, "x")
+                        k += 1
                 y += 1
             else:
                 limy -= 1
-            # print(limy, "y")
 
     def set_switches_from_rule_nbr(self):
         """
@@ -212,12 +251,7 @@ class CA_World(OnOffWorld):
         Copy (the settings on) that line to the bottom row of patches.
         Note that the lists in self.ca_lines are lists of 0/1. They are not lists of Patches.
         """
-
         self.ca_lines = []
-        self.ca_left_lines = []
-        self.ca_right_lines = []
-        self.ca_left_lines.append([0,0])
-        self.ca_right_lines.append([0,0])
         self.ca_lines.append(self.build_initial_line())
         self.set_display_from_lines()
 
@@ -227,36 +261,12 @@ class CA_World(OnOffWorld):
         o Generate an additional line in self.ca_lines.
         o Copy self.ca_lines to the display
         """
+
         #make a dictionary of rules and which are active
         binary = self.int_to_8_bit_binary(self.rule_nbr)
         binary_str = ''.join(binary)
 
         active_rules = dict(zip(CA_World.bin_0_to_7, list(binary_str)))
-        # print('Active Rules: ' + str(active_rules))
-        # print("is 001 active " + str(active_rules['001']))
-
-        #move all elements one over in the history
-        # self.ca_lines.insert(0,[])
-        # self.ca_left_lines.insert(0,[])
-        # self.ca_right_lines.insert(0,[])
-
-        # find the indexes to isolate the visible part of the cellular automaton
-        start_index = len(self.ca_left_lines[-1])
-        stop_index = start_index + len(self.ca_lines[-1])
-
-        #get the combined line of visible and not visible cells
-        combined_line_to_compute = self.ca_left_lines[-1] + self.ca_lines[-1] + self.ca_right_lines[-1]
-
-        #check to see if a zero needs to be added to either end
-        #useful for the rule 001 or 100
-        if combined_line_to_compute[:2] == [0,1]:
-            combined_line_to_compute.insert(0,0)
-            #make sure to att 1 to the indexes to account for the new element
-            start_index += 1
-            stop_index += 1
-
-        if combined_line_to_compute[-2:] == [1,0]:
-            combined_line_to_compute.append(0)
 
 
         #variable to store the new computed line
@@ -267,34 +277,25 @@ class CA_World(OnOffWorld):
         #compute the new line
 
         #for each ca triplet to check
-        for i in range(len(combined_line_to_compute) - 2):
+        for i in range(len(self.ca_lines[-1]) - 2):
             #make the array of three cells together ex [1,0,0] starting at index one and ending at index 3 before the end
             #then check to see if it is active from the dictionary
             #add the new cell as a 1 if active else set it to 0
-            new_line.append(1 if active_rules["".join(str(x) for x in combined_line_to_compute[i:i + 3])] == '1' else 0)
+            new_line.append(1 if active_rules["".join(str(x) for x in self.ca_lines[-1][i:i + 3])] == '1' else 0)
 
-
-        # for i in range(len(combined_line_to_compute) - 2):
-        #     to_check = "".join(str(x) for x in combined_line_to_compute[i:i+3])
-        #     # print(to_check)
-        #
-        #     # print('from list: ' + active_rules[to_check])
-        #     if (active_rules[to_check]) == '1':
-        #         # print ('Active Rule')
-        #         new_line.append(1)
-        #     else:
-        #         # print('Inactive Rule')
-        #         new_line.append(0)
-
-
-        #last element in the new line will also be zero
+        # variable to store the new computed line
+        # first one will always be zero as there is no rule
+        # find better explanation
         new_line.append(0)
 
-        #seperate the components
-        #and add them to ther histories
-        self.ca_left_lines.append(new_line[:start_index])
-        self.ca_lines.append(new_line[start_index:stop_index])
-        self.ca_right_lines.append(new_line[stop_index:])
+
+        self.ca_lines.append(new_line)
+
+
+        #add leading and trailing zeroes to all entries in the history
+        for row in self.ca_lines:
+            row.insert(0,0)
+            row.append(0)
 
         self.set_display_from_lines()
 
