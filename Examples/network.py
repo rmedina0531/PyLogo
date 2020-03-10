@@ -15,7 +15,7 @@ class Network_Agent(Agent):
         pass
 
 class Network_World(World):
-    def __init__(self):
+    def nothing(self):
         pass
 
     def setup_clear(self):
@@ -69,9 +69,10 @@ ca_left_upper = [[sg.Button(SETUP_CLEAR), sg.Text('Links to Use'), sg.Combo(valu
                   sg.Slider(key=CONNECTION_PROB, resolution=.01, default_value= .2, orientation='horizontal')],
                  HOR_SEP(30, pad=((0, 0), (0, 0))),
                  [sg.Text('Neighborhood Size'),
-                  sg.Slider(key=NEIGHBORHOOD_SIZE, resolution=1, default_value=3, orientation='horizontal')],
-                 [sg.Button(SMALL_WORLD), sg.Text('Rewire Prob'),
-                  sg.Slider(key=REWIRE_PROB, resolution=.01, default_value=.1, orientation='horizontal')]]
+                  sg.Slider(key=NEIGHBORHOOD_SIZE, resolution=1, default_value=3, orientation='horizontal', range=(0,20))],
+                 [sg.Button(SMALL_WORLD)],
+                 [sg.Text('Rewire Prob'),
+                  sg.Slider(key=REWIRE_PROB, resolution=.01, default_value=.1, orientation='horizontal', range=(0,1))]]
 
 
 """ 
