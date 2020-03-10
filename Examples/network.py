@@ -32,6 +32,22 @@ import PySimpleGUI as sg
 The following appears at the top-left of the window. 
 It puts a row consisting of a Text widgit and a ComboBox above the widgets from on_off.py
 """
+SETUP_CLEAR = 'setup_clear'
+LINKS_TO_USE = 'links_to_use'
+LAYOUT = 'layout'
+LAYOUT_ONCE = 'layout_once'
+LAYOUT_TYPE = 'layout_type'
+CLEAR_BEFORE_GENERATION = 'clear_before_generation'
+PREFERENTIAL_ATTACHMENT = 'preferential_attachment'
+RING = 'ring'
+STAR = 'star'
+WHEEL = 'wheel'
+SPOKES_DIRECTION = 'spokes_direction'
+RANDOM = 'random'
+CONNECTION_PROB = 'connection_prob'
+NEIGHBORHOOD_SIZE = 'neighborhood_size'
+SMALL_WORLD = 'small_world'
+REWIRE_PROB = 'rewire_prob'
 #ca _left_upper will need
 #setup button and Clear button (use undirected links on set up)
 #Layout:spring "sould be continual as in the forces and effects example
@@ -40,35 +56,28 @@ It puts a row consisting of a Text widgit and a ComboBox above the widgets from 
 #style (preferential, attachment, ring, star)
 #wheel "find out what a wheel model is and generate one"
 #random
-ca_left_upper = [[sg.Text('stuff')]]
+ca_left_upper = [[sg.Button(SETUP_CLEAR), sg.Text('Links to Use'), sg.Combo(values=['directed', 'undirected'],
+                                                   key=LINKS_TO_USE, default_value='undirected')],
+                 [sg.Button(LAYOUT), sg.Button(LAYOUT_ONCE), sg.Text('Layout'),
+                  sg.Combo(values=['spring', 'circle', 'radial', 'tutte'], key=LAYOUT_TYPE, default_value='spring')],
+                 [sg.Text('Generators'), sg.CB(CLEAR_BEFORE_GENERATION, default=True)],
+                 HOR_SEP(30, pad=((0, 0), (0, 0))),
+                 [sg.Button(PREFERENTIAL_ATTACHMENT), sg.Button(RING), sg.Button(STAR)],
+                 [sg.Button(WHEEL), sg.Text('Spokes Direction'),
+                  sg.Combo(values=['outward', 'inward'], key=SPOKES_DIRECTION, default_value='outward')],
+                 [sg.Button(RANDOM), sg.Text('# Nodes'),
+                  sg.Slider(key=CONNECTION_PROB, resolution=.01, default_value= .2, orientation='horizontal')],
+                 HOR_SEP(30, pad=((0, 0), (0, 0))),
+                 [sg.Text('Neighborhood Size'),
+                  sg.Slider(key=NEIGHBORHOOD_SIZE, resolution=1, default_value=3, orientation='horizontal')],
+                 [sg.Button(SMALL_WORLD), sg.Text('Rewire Prob'),
+                  sg.Slider(key=REWIRE_PROB, resolution=.01, default_value=.1, orientation='horizontal')]]
 
-
-###example###
-# ca_left_upper = [[sg.Text('Initial row:'),
-#                   sg.Combo(values=['Left', 'Center', 'Right', 'Random'], key='init', default_value='Right')],
-#                  [sg.Text('Rows:'), sg.Text('     0', key='rows')],
-#                  HOR_SEP(30)] + \
-#                  on_off_left_upper
-
-# The switches are CheckBoxes with keys from CA_World.bin_0_to_7 (in reverse).
-# These are the actual GUI widgets, which we access via their keys.
-# The pos_to_switch dictionary maps position values in the rule number as a binary number
-# to these widgets. Each widget corresponds to a position in the rule number.
-# Note how we generate the text for the chechboxes.
-# switches = [sg.CB(n + '\n 1', key=n, pad=((30, 0), (0, 0)), enable_events=True)
-#                                              for n in reversed(CA_World.bin_0_to_7)]
 
 """ 
 This  material appears above the screen: 
 the rule number slider, its binary representation, and the switches.
 """
-# ca_right_upper = [[sg.Text('Rule number', pad=((100, 0), (20, 10))),
-#                    sg.Slider(key='Rule_nbr', range=(0, 255), orientation='horizontal',
-#                              enable_events=True, pad=((10, 20), (0, 10))),
-#                    sg.Text('00000000 (binary)', key='bin_string', enable_events=True, pad=((0, 0), (10, 0)))],
-#
-#                   switches
-#                   ]
 
 
 if __name__ == "__main__":
@@ -87,4 +96,5 @@ if __name__ == "__main__":
 
     #find out if patch size and board rows cols are needed, as well as bounce=true (i think its the thing that lets
     #the world not wrap around
-    PyLogo(Network_World, 'Networks', gui_left_upper=None, agent_class=Node_Agent)
+    PyLogo(Network_World, 'Networks', gui_left_upper=ca_left_upper, agent_class=Network_Agent, patch_size=9,
+           board_rows_cols=(65, 71), bounce=True)
