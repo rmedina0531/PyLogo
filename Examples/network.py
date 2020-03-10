@@ -12,11 +12,15 @@ from random import choice, uniform
 
 class Network_Agent(Agent):
     def __init__(self):
-        pass
+        center_pixel = Pixel_xy((uniform(0, SCREEN_PIXEL_WIDTH()), uniform(0, SCREEN_PIXEL_HEIGHT())))
+        color = utils.color_random_variation(Color('yellow'))
+        super().__init__(center_pixel=center_pixel, color=color, scale=1, shape_name='square')
 
 class Network_World(World):
-    def nothing(self):
-        pass
+    def setup(self):
+        nbr_agents = SimEngine.gui_get('population')
+        nbr_agents = 1
+        self.create_agents(nbr_agents)
 
     def setup_clear(self):
         pass
