@@ -48,6 +48,7 @@ class Network_World(World):
     def ring(self):
         centers = self.create_circle(SimEngine.gui_get(NUMBER_NODES))
         for i in range(NUMBER_NODES):
+            pass
 
 
     def create_circle(self):
