@@ -8,27 +8,53 @@ from core.sim_engine import SimEngine
 import core.utils as utils
 from core.world_patch_block import World
 
-from random import choice, uniform
+from random import choice, uniform, randint
 
 class Network_Agent(Agent):
-    def __init__(self):
-        center_pixel = Pixel_xy((uniform(0, SCREEN_PIXEL_WIDTH()), uniform(0, SCREEN_PIXEL_HEIGHT())))
-        color = utils.color_random_variation(Color('yellow'))
-        super().__init__(center_pixel=center_pixel, color=color, scale=1, shape_name='square')
+    def __init__(self, **kwargs):
+        # center_pixel = Pixel_xy((uniform(0, SCREEN_PIXEL_WIDTH()), uniform(0, SCREEN_PIXEL_HEIGHT())))
+        # color = utils.color_random_variation(Color('yellow'))
+        # super().__init__(center_pixel=center_pixel, scale=1, shape_name='circle')
+
+        shape_name = 'circle'
+        super().__init__(shape_name=shape_name, **kwargs)
+
+    def make_links(self, agents):
+        pass
 
 class Network_World(World):
     def setup(self):
-        nbr_agents = SimEngine.gui_get('population')
-        nbr_agents = 1
-        self.create_agents(nbr_agents)
+        # nbr_agents = SimEngine.gui_get('population')
+        # nbr_agents = 4
+        # self.create_agents(nbr_agents)
+        pass
 
     def setup_clear(self):
-        pass
+        self.agents = None
         #clear_all
         #set_current_plot
         #set_default_shape
         #reset_ticks
 
+    def handle_event(self, event):
+        super().handle_event(event)
+        events = {'star':self.star}
+
+    def star(self):
+        pass
+        #create a circle with the nodes
+        #connect all the nodes with one central node
+
+    def ring(self):
+        centers = self.create_circle(SimEngine.gui_get(NUMBER_NODES))
+        for i in range(NUMBER_NODES):
+
+
+    def create_circle(self):
+        #TODO
+        #generate a circle patter of coordinates, return the pattern as a list
+        centers = 0
+        return centers
 # ############################################## Define GUI ############################################## #
 import PySimpleGUI as sg
 
@@ -52,6 +78,7 @@ CONNECTION_PROB = 'connection_prob'
 NEIGHBORHOOD_SIZE = 'neighborhood_size'
 SMALL_WORLD = 'small_world'
 REWIRE_PROB = 'rewire_prob'
+NUMBER_NODES = 'number_of_nodes'
 #ca _left_upper will need
 #setup button and Clear button (use undirected links on set up)
 #Layout:spring "sould be continual as in the forces and effects example
@@ -66,6 +93,8 @@ ca_left_upper = [[sg.Button(SETUP_CLEAR), sg.Text('Links to Use'), sg.Combo(valu
                   sg.Combo(values=['spring', 'circle', 'radial', 'tutte'], key=LAYOUT_TYPE, default_value='spring')],
                  [sg.Text('Generators'), sg.CB(CLEAR_BEFORE_GENERATION, default=True)],
                  HOR_SEP(30, pad=((0, 0), (0, 0))),
+                 [sg.Text(NUMBER_NODES), sg.Slider(key=NUMBER_NODES, resolution=1, default_value=5,
+                                                   orientation='horizontal')],
                  [sg.Button(PREFERENTIAL_ATTACHMENT), sg.Button(RING), sg.Button(STAR)],
                  [sg.Button(WHEEL), sg.Text('Spokes Direction'),
                   sg.Combo(values=['outward', 'inward'], key=SPOKES_DIRECTION, default_value='outward')],
