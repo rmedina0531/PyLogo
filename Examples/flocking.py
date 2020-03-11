@@ -109,12 +109,13 @@ from pygame import Color
 
 from core.agent import Agent
 from core.gui import BLOCK_SPACING, HOR_SEP, SCREEN_PIXEL_HEIGHT, SCREEN_PIXEL_WIDTH
+from core.link import hash_object, Link, link_exists
 from core.pairs import Pixel_xy
 from core.sim_engine import SimEngine
 import core.utils as utils
 from core.world_patch_block import World
 
-from random import uniform
+from random import choice, uniform
 
 
 class Flocking_Agent(Agent):
@@ -145,12 +146,22 @@ class Flocking_Agent(Agent):
         amount_to_turn = utils.turn_toward_amount(self.heading, avg_heading_toward_flockmates, max_cohere_turn)
         self.turn_right(amount_to_turn)
 
-    def flock(self):
+    def flock(self, showing_flockmates):
         # NetLogo allows one to specify the units within the Gui widget.
         # Here we do it explicitly by multiplying by BLOCK_SPACING().
         vision_limit_in_pixels = SimEngine.gui_get('vision') * BLOCK_SPACING()
+
         flockmates = self.agents_in_radius(vision_limit_in_pixels)
+
         if len(flockmates) > 0:
+
+            # If showing_flockmates, create links to flockmates if they don't already exist.
+            if showing_flockmates:
+                for flockmate in flockmates:
+                    # Don't make a link if it already exists.
+                    if not link_exists(self, flockmate):
+                        Link(self, flockmate, color=Color('skyblue3'))
+
             nearest_neighbor = min(flockmates, key=lambda flockmate: self.distance_to(flockmate))
 
             min_separation = SimEngine.gui_get('minimum separation') * BLOCK_SPACING()
@@ -173,10 +184,16 @@ class Flocking_World(World):
         self.create_agents(nbr_agents)
 
     def step(self):
+        World.links = set()
+        showing_flockmates = SimEngine.gui_get('Show flockmates?')
         # World.agents is the set of agents kept by the world
         for agent in World.agents:
             # agent.flock() resets agent's heading. Agent doesn't move.
-            agent.flock()
+            agent.flock(showing_flockmates)
+
+            # Print this agent's flockmate links if curious.
+            # print(f'{agent}: {[str(lnk) for lnk in agent.all_links()]}')
+
             # Here's where the agent actually moves.
             # The move depends on the speed and the heading.
             speed = SimEngine.gui_get('speed')
@@ -192,31 +209,32 @@ gui_left_upper = [
 
                   [sg.Text('vision', pad=((0, 5), (20, 0)),
                            tooltip='The number of patch-lengths that define the current flockmates'),
-                   sg.Slider(key='vision', range=(0, 20), resolution=0.5, default_value=5, orientation='horizontal',
-                             size=(10, 20), tooltip='The number of patch-lengths that define the current flockmates')],
+                   sg.Slider(key='vision', range=(0, 20), resolution=0.5, default_value=7,  # NetLogo=5
+                             orientation='horizontal', size=(10, 20),
+                             tooltip='The number of patch-lengths that define the current flockmates')],
 
                   [sg.Text('speed', pad=((0, 5), (20, 0)),
                            tooltip='The speed of the agents'),
                    sg.Slider(key='speed', range=(0, 10), resolution=0.5, default_value=2, orientation='horizontal',
                              size=(10, 20), tooltip='The speed of the agents')],
 
-                  HOR_SEP(30),
+                  HOR_SEP(30, pad=((0, 0), (0, 0))),
 
                   [sg.Text('min separation', pad=((0, 5), (20, 0)),
                            tooltip='The minimum acceptable patch-lengths to nearest neighbor'),
-                   sg.Slider(key='minimum separation', resolution=0.5, range=(1, 5), default_value=1,
+                   sg.Slider(key='minimum separation', resolution=0.5, range=(1, 5), default_value=2,  # NetLogo=1
                              orientation='horizontal', size=(10, 20),
                              tooltip='The minimum acceptable patch-lengths to nearest neighbor')],
 
                   [sg.Text('max-sep-turn', pad=((0, 5), (20, 0)),
                            tooltip='The most degrees (in angles) an agent can turn '
                                    'to move away from its nearest neighbor'),
-                   sg.Slider(key='max-sep-turn', range=(0, 20), resolution=0.5, default_value=1.5,
+                   sg.Slider(key='max-sep-turn', range=(0, 20), resolution=0.5, default_value=3,  # NetLogo=1.5,
                              orientation='horizontal', size=(10, 20),
                              tooltip='The most degrees (in angles) an agent can turn '
                                      'to move away from its nearest neighbor')],
 
-                  HOR_SEP(30),
+                  HOR_SEP(30, pad=((0, 0), (0, 0))),
 
                   [sg.Text('max-cohere-turn', pad=((0, 5), (20, 0)),
                            tooltip='The most degrees (in angles) an agent can turn to stay with its flockmates'),
@@ -230,10 +248,15 @@ gui_left_upper = [
                              orientation='horizontal', size=(10, 20),
                              tooltip='The most degrees (in angles) an agent can turn when aligning with flockmates')],
 
+                  HOR_SEP(30, pad=((0, 0), (0, 0))),
+
+                  [sg.Checkbox('Show flockmates?', key='Show flockmates?', default=False,
+                               tooltip='Show links between flockmates')]
+
                   ]
 
 
 if __name__ == "__main__":
     from core.agent import PyLogo
     PyLogo(Flocking_World, 'Flocking', gui_left_upper, agent_class=Flocking_Agent,
-           patch_size=9, board_rows_cols=(41, 71))
+           patch_size=9, board_rows_cols=(65, 71))

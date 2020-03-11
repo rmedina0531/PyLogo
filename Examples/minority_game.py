@@ -145,7 +145,6 @@ class Minority_Game_Spying_Agent(Minority_Game_Agent):
 
 
 class Minority_Game_World(World):
-
     # These values are used by the agents.
     # Make them easy to access by putting them at the Minority_Game_World class level.
     copy_agents = None
@@ -170,7 +169,7 @@ class Minority_Game_World(World):
     def generate_all_strategies(self):
         # Generate enough strategies for all agents.
         strategy_length = 2 ** self.history_length
-        strategies_per_agent = SimEngine.gui_get(STRATEGIES_PER_AGENT)
+        strategies_per_agent = SimEngine.get_gui_value(STRATEGIES_PER_AGENT)
         strategies = set()
         # Why a while loop rather than a for loop?
         # Why is strategies a set rather than a list?
@@ -179,17 +178,18 @@ class Minority_Game_World(World):
             strategies.add(self.generate_a_strategy(strategy_length))
         strategies = list(strategies)
         return (strategies, strategies_per_agent)
-    
+
     def generate_the_agents(self):
         (strategies, strategies_per_agent) = self.generate_all_strategies()
         self.agent_vertical_separation = gui.PATCH_ROWS / Minority_Game_World.nbr_agents
         for agent_id in range(Minority_Game_World.nbr_agents):
             starting_patch = self.get_starting_patch(agent_id, self.agent_vertical_separation)
-            strategies_for_this_agent = strategies[strategies_per_agent*agent_id:strategies_per_agent*(agent_id + 1)]
+            strategies_for_this_agent = strategies[
+                                        strategies_per_agent * agent_id:strategies_per_agent * (agent_id + 1)]
 
             # Which agent class (or subclass) is this agent?
             agent_class = Minority_Game_Random_Agent if agent_id in Minority_Game_World.random_agent_ids else \
-                          Minority_Game_Agent
+                Minority_Game_Agent
             # Create the agent
             agent_class(strategies_for_this_agent, starting_patch)
 
@@ -199,7 +199,7 @@ class Minority_Game_World(World):
 
     def history_to_index(self):
         # The final argument (0) is optional.
-        val = reduce(lambda so_far, next: so_far*2 + next, self.history, 0)
+        val = reduce(lambda so_far, next: so_far * 2 + next, self.history, 0)
         return val
 
     @staticmethod
@@ -235,11 +235,11 @@ class Minority_Game_World(World):
 
     def setup(self):
         Agent.id = 0
-        Minority_Game_World.steps_to_win = SimEngine.gui_get(STEPS_TO_WIN)
+        Minority_Game_World.steps_to_win = SimEngine.get_gui_value(STEPS_TO_WIN)
         # Adjust how far one step is based on number of steps needed to win
         Minority_Game_World.one_step = (gui.PATCH_COLS - 2) * gui.BLOCK_SPACING() / Minority_Game_World.steps_to_win
         # For longer/shorter races, speed up/slow down frames/second
-        gui.set_fps(round(6*Minority_Game_World.steps_to_win/50))
+        gui.set_fps(round(6 * Minority_Game_World.steps_to_win / 50))
 
         # self.done will be True if this a repeat game with the same agents.
         if self.done:
@@ -247,16 +247,16 @@ class Minority_Game_World(World):
             return
 
         # This is the normal setup.
-        Minority_Game_World.nbr_agents = SimEngine.gui_get(NBR_AGENTS)
+        Minority_Game_World.nbr_agents = SimEngine.get_gui_value(NBR_AGENTS)
         if Minority_Game_World.nbr_agents % 2 == 0:
             Minority_Game_World.nbr_agents += (1 if Minority_Game_World.nbr_agents < gui.WINDOW[NBR_AGENTS].Range[1]
                                                else (-1))
-            # gui.WINDOW[NBR_AGENTS].update(value=Minority_Game_World.nbr_agents)
-            SimEngine.gui_set(NBR_AGENTS, value=Minority_Game_World.nbr_agents)
+            gui.WINDOW[NBR_AGENTS].update(value=Minority_Game_World.nbr_agents)
         Minority_Game_World.random_agent_ids = {0, Minority_Game_World.nbr_agents - 1}
+        print(Minority_Game_World.random_agent_ids)
 
         # Generate a random initial history
-        self.history_length = SimEngine.gui_get(HISTORY_LENGTH)
+        self.history_length = SimEngine.get_gui_value(HISTORY_LENGTH)
         self.history = [choice([0, 1]) for _ in range(self.history_length)]
 
         self.generate_the_agents()
@@ -265,7 +265,7 @@ class Minority_Game_World(World):
     def step(self):
         history_as_index = self.history_to_index()
         one_votes = sum(agent.make_selection(history_as_index) for agent in World.agents)
-        winner = 0 if one_votes > Minority_Game_World.nbr_agents/2 else 1
+        winner = 0 if one_votes > Minority_Game_World.nbr_agents / 2 else 1
         for agent in World.agents:
             agent.update(history_as_index, winner)
 
@@ -287,6 +287,7 @@ STEPS_TO_WIN = 'Steps to win'
 STRATEGIES_PER_AGENT = 'Strategies per agent'
 
 import PySimpleGUI as sg
+
 gui_left_upper = [[sg.Text(HISTORY_LENGTH, tooltip='The length of the history record'),
                    sg.Slider(key=HISTORY_LENGTH, range=(0, 8), default_value=5,
                              size=(10, 20), orientation='horizontal',
