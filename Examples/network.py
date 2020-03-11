@@ -7,6 +7,8 @@ from core.pairs import Pixel_xy
 from core.sim_engine import SimEngine
 import core.utils as utils
 from core.world_patch_block import World
+from core.link import Link, link_exists
+import random
 
 from random import choice, uniform, randint
 
@@ -31,6 +33,31 @@ class Network_World(World):
         #create a circle with the nodes
         #connect each to the neighbors
         pass
+
+    def small_world(self):
+        #clears all the previous stuff
+        self.setup()
+        #generate a list of nodes arranged by neighbors in a circle
+        circle_nodes = []
+        #create the initial connections depending on neighborhood size
+        for i in range(len(circle_nodes)):
+            for j in range(1, int(SimEngine.gui_get(NEIGHBORHOOD_SIZE)) + 1):
+                                                    #makes sure to loop back if over list size
+                Link(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)])
+
+        #rewire chance for each link
+        #get rewire chance
+        rewire_chance = SimEngine.gui_get(REWIRE_PROB)
+        for l in self.links:
+            #generate random number to see if it gets rewired
+            if random.random() < rewire_chance:
+                #get the first elements in the link
+                node_to_rewire = hash(l)[0]
+                #generate the neighbors
+
+        
+
+
 # ############################################## Define GUI ############################################## #
 import PySimpleGUI as sg
 
