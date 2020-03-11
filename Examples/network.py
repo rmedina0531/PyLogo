@@ -12,33 +12,15 @@ from random import choice, uniform, randint
 
 class Network_Agent(Agent):
     def __init__(self, **kwargs):
-        # center_pixel = Pixel_xy((uniform(0, SCREEN_PIXEL_WIDTH()), uniform(0, SCREEN_PIXEL_HEIGHT())))
-        # color = utils.color_random_variation(Color('yellow'))
-        # super().__init__(center_pixel=center_pixel, scale=1, shape_name='circle')
-
-        shape_name = 'circle'
-        super().__init__(shape_name=shape_name, **kwargs)
-
-    def make_links(self, agents):
         pass
+
 
 class Network_World(World):
     def setup(self):
-        # nbr_agents = SimEngine.gui_get('population')
-        # nbr_agents = 4
-        # self.create_agents(nbr_agents)
         pass
 
-    def setup_clear(self):
-        self.agents = None
-        #clear_all
-        #set_current_plot
-        #set_default_shape
-        #reset_ticks
-
     def handle_event(self, event):
-        super().handle_event(event)
-        events = {'star':self.star}
+        pass
 
     def star(self):
         pass
@@ -46,16 +28,9 @@ class Network_World(World):
         #connect all the nodes with one central node
 
     def ring(self):
-        centers = self.create_circle(SimEngine.gui_get(NUMBER_NODES))
-        for i in range(NUMBER_NODES):
-            pass
-
-
-    def create_circle(self):
-        #TODO
-        #generate a circle patter of coordinates, return the pattern as a list
-        centers = 0
-        return centers
+        #create a circle with the nodes
+        #connect each to the neighbors
+        pass
 # ############################################## Define GUI ############################################## #
 import PySimpleGUI as sg
 
@@ -77,7 +52,7 @@ SPOKES_DIRECTION = 'spokes_direction'
 RANDOM = 'random'
 CONNECTION_PROB = 'connection_prob'
 NEIGHBORHOOD_SIZE = 'neighborhood_size'
-SMALL_WORLD = 'small_world'
+SMALL_WORLD = 'small world'
 REWIRE_PROB = 'rewire_prob'
 NUMBER_NODES = 'number_of_nodes'
 #ca _left_upper will need
@@ -88,11 +63,10 @@ NUMBER_NODES = 'number_of_nodes'
 #style (preferential, attachment, ring, star)
 #wheel "find out what a wheel model is and generate one"
 #random
-ca_left_upper = [[sg.Button(SETUP_CLEAR), sg.Text('Links to Use'), sg.Combo(values=['directed', 'undirected'],
+ca_left_upper = [[sg.Text('Links to Use'), sg.Combo(values=['directed', 'undirected'],
                                                    key=LINKS_TO_USE, default_value='undirected')],
-                 [sg.Button(LAYOUT), sg.Button(LAYOUT_ONCE), sg.Text('Layout'),
-                  sg.Combo(values=['spring', 'circle', 'radial', 'tutte'], key=LAYOUT_TYPE, default_value='spring')],
-                 [sg.Text('Generators'), sg.CB(CLEAR_BEFORE_GENERATION, default=True)],
+                 [sg.Text('Layout'), sg.Combo(values=['spring', 'circle', 'radial', 'tutte'],
+                                              key=LAYOUT_TYPE, default_value='spring')],
                  HOR_SEP(30, pad=((0, 0), (0, 0))),
                  [sg.Text(NUMBER_NODES), sg.Slider(key=NUMBER_NODES, resolution=1, default_value=5,
                                                    orientation='horizontal')],
@@ -100,7 +74,7 @@ ca_left_upper = [[sg.Button(SETUP_CLEAR), sg.Text('Links to Use'), sg.Combo(valu
                  [sg.Button(WHEEL), sg.Text('Spokes Direction'),
                   sg.Combo(values=['outward', 'inward'], key=SPOKES_DIRECTION, default_value='outward')],
                  [sg.Button(RANDOM), sg.Text('# Nodes'),
-                  sg.Slider(key=CONNECTION_PROB, resolution=.01, default_value= .2, orientation='horizontal')],
+                  sg.Slider(key=CONNECTION_PROB, resolution=1, default_value= 5, orientation='horizontal')],
                  HOR_SEP(30, pad=((0, 0), (0, 0))),
                  [sg.Text('Neighborhood Size'),
                   sg.Slider(key=NEIGHBORHOOD_SIZE, resolution=1, default_value=3, orientation='horizontal', range=(0,20))],

@@ -156,13 +156,13 @@ class SimpleGUI:
         self.idle_fps = 10
 
         self.caption = caption
-        pg.init()
+        # pg.init()
         self.screen_shape_width_height = (SCREEN_PIXEL_WIDTH(), SCREEN_PIXEL_HEIGHT())
 
         # All these gui.<variable> elements are globals in this file.
         gui.WINDOW = self.make_window(caption, gui_left_upper, gui_right_upper=gui_right_upper, bounce=bounce, fps=fps)
 
-        # pg.init()
+        pg.init()
         gui.FONT = SysFont(None, int(1.5 * gui.BLOCK_SPACING()))
 
         # All graphics are drawn to gui.SCREEN, which is a global variable.
