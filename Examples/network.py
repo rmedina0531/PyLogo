@@ -188,12 +188,14 @@ class Network_World(World):
         self.setup()
         nodes = self.circle_of_nodes()
         for i in range(len(nodes)):
-            if i == len(nodes) -1:
+            if i > len(nodes) -1:
                 nodes[i].make_link(nodes[0])
             else:
                 nodes[i].make_link(nodes[i+1])
 
     def circle_of_nodes(self, center=False):
+        #TODO
+        #number of nodes created is still being shifty
         #create a list of angles for number of nodes
         nbr_nodes = SimEngine.gui_get(NUMBER_NODES)
         nodes = []
@@ -224,6 +226,7 @@ class Network_World(World):
             for j in range(1, int(SimEngine.gui_get(NEIGHBORHOOD_SIZE)) + 1):
                 #makes sure to loop back if over list size
                 #only taking into account undirected links
+                #make sure to not connect nodes to themselves
                 if not link_exists(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)]) and \
                         circle_nodes[i] is not circle_nodes[(i+j)%len(circle_nodes)]:
                     Link(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)])
@@ -231,16 +234,44 @@ class Network_World(World):
         #rewire chance for each link
         #get rewire chance
         rewire_chance = SimEngine.gui_get(REWIRE_PROB)
-        print(len(self.links))
+
+        old_links = []
+        #copy the links
         for l in self.links:
-            #generate random number to see if it gets rewired
+            print(l)
+            old_links.append(l)
+        for l in old_links:
+            # generate random number to see if it gets rewired
             if random.random() < rewire_chance:
                 #pick the first node in the link
-                print(str(l.agent_1)+str(l.agent_2))
-                #find all the nodes neigbors
-                #from all nodes minus the neighbors
-                    #pick one at random to create a new link
-                #make sure that new created links are ignored for future checks in this loop
+                # print(str(l.agent_1)+str(l.agent_2))
+                # print(len(l.agent_1.all_links()))
+
+                #make random later
+                # pick the first node in the link
+                # find all the nodes neigbors
+                #cosider yourself as a neighbor
+                neighbors = [l.agent_1]
+                for n_link in l.agent_1.all_links():
+                    neighbors.append(n_link.other_side(l.agent_1))
+
+                # print('neighbors of agent' + str(l.agent_1))
+                # for i in neighbors:
+                #     print(i)
+                #for all nodes minus the neighbors
+                #show all non neighbors
+                # for i in list(self.agents - set(neighbors)):
+                #     print(i)
+
+                #check to see if there exists any agent not considered a neighbor
+                if len(neighbors) < len(self.agents):
+                    new_neighbor = choice(list(self.agents - set(neighbors)))
+                    # print(new_neighbor)
+                    #remove the current link
+                    self.links.remove(l)
+                    #create the new link add it to the list of links to ignore
+                    Link(l.agent_1, new_neighbor)
+
     def step(self):
         #enable forces only on spring setup
         if SimEngine.gui_get(LAYOUT_TYPE) == 'spring':
