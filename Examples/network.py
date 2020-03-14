@@ -42,7 +42,8 @@ class Network_Node(Agent):
 
     def adjust_distances(self, velocity_adjustment):
         #get from gui what the base distance units
-        dist_unit = SimEngine.gui_get(('dist_unit'))
+        # dist_unit = SimEngine.gui_get(('dist_unit'))
+        dist_unit = 10
 
         #define how many distance units exist per screen
         screen_distance_unit = sqrt(SCREEN_PIXEL_WIDTH()**2 + SCREEN_PIXEL_HEIGHT()**2)/dist_unit
@@ -116,18 +117,26 @@ class Network_Node(Agent):
         d = pixel_a.distance_to(pixel_b, wrap=False)
         if repulsive:
             dist = max(1, pixel_a.distance_to(pixel_b, wrap=False) / screen_distance_unit)
-            rep_coefficient = SimEngine.gui_get('rep_coef')
-            rep_exponent = SimEngine.gui_get('rep_exponent')
+            # rep_coefficient = SimEngine.gui_get('rep_coef')
+            # rep_exponent = SimEngine.gui_get('rep_exponent')
+            #hard coded repulsion and attraction
+            rep_coefficient = 1
+            rep_exponent = -2
+
             force = direction * (10**rep_coefficient)/10 * dist**rep_exponent
             return force
         else:  # attraction
             dist = max(1, max(d, screen_distance_unit) / screen_distance_unit)
-            att_exponent = SimEngine.gui_get('att_exponent')
+            # att_exponent = SimEngine.gui_get('att_exponent')
+            #hard coded
+            att_exponent = 2
             force = direction*dist**att_exponent
             # If the link is too short, push away instead of attracting.
             if d < screen_distance_unit:
                 force = force*(-1)
-            att_coefficient = SimEngine.gui_get('att_coef')
+            # att_coefficient = SimEngine.gui_get('att_coef')
+            #hard coded
+            att_coefficient = 1
             return 10**(att_coefficient-1) * force
 
     def neighbors(self):
@@ -152,6 +161,14 @@ class Network_Node(Agent):
 
 
 class Network_World(World):
+    def __init__(self, patch_class, agent_class):
+        self.velocity_adjustment = 1
+        super().__init__(patch_class, agent_class)
+        # self.shortest_path_links = None
+        # self.selected_nodes = set()
+        # self.disable_enable_buttons()
+
+
     def setup(self):
         self.clear_all()
 
@@ -201,7 +218,7 @@ class Network_World(World):
         #clears all the previous stuff
         self.setup()
         #generate a list of nodes arranged by neighbors in a circle
-        circle_nodes = []
+        circle_nodes = self.circle_of_nodes()
         #create the initial connections depending on neighborhood size
         for i in range(len(circle_nodes)):
             for j in range(1, int(SimEngine.gui_get(NEIGHBORHOOD_SIZE)) + 1):
@@ -218,7 +235,29 @@ class Network_World(World):
                 node_to_rewire = hash(l)[0]
                 #generate the neighbors
 
-        
+    def step(self):
+        #enable forces only on spring setup
+        if SimEngine.gui_get(LAYOUT_TYPE) == 'spring':
+            for node in self.agents:
+                node.adjust_distances(self.velocity_adjustment)
+        # # Set all the links back to normal.
+        # for lnk in World.links:
+        #     lnk.color = lnk.default_color
+        #     lnk.width = 1
+        #
+        # self.selected_nodes = [node for node in self.agents if node.highlighted]
+        # # If there are exactly two selected nodes, find the shortest path between them.
+        # if len(self.selected_nodes) == 2:
+        #     self.shortest_path_links = self.shortest_path()
+        #     # self.shortest_path_links will be either a list of links or None
+        #     # If there is a path, highlight it.
+        #     if self.shortest_path_links:
+        #         for lnk in self.shortest_path_links:
+        #             lnk.color = Color('red')
+        #             lnk.width = 2
+        #
+        # # Update which buttons are enabled.
+        # self.disable_enable_buttons()
 
 
 # ############################################## Define GUI ############################################## #
