@@ -173,7 +173,7 @@ class Network_World(World):
         self.clear_all()
 
     def handle_event(self, event):
-        events = {RING:self.ring, STAR:self.star}
+        events = {RING:self.ring, STAR:self.star, SMALL_WORLD:self.small_world}
         if event in events:
             events[event]()
 
@@ -232,7 +232,8 @@ class Network_World(World):
             #generate random number to see if it gets rewired
             if random.random() < rewire_chance:
                 #get the first elements in the link
-                node_to_rewire = hash(l)[0]
+                # node_to_rewire = hash(l)[0]
+                print('hello')
                 #generate the neighbors
 
     def step(self):
@@ -298,7 +299,7 @@ ca_left_upper = [[sg.Text('Links to Use'), sg.Combo(values=['directed', 'undirec
                                               key=LAYOUT_TYPE, default_value='spring')],
                  HOR_SEP(30, pad=((0, 0), (0, 0))),
                  [sg.Text(NUMBER_NODES), sg.Slider(key=NUMBER_NODES, resolution=1, default_value=5,
-                                                   orientation='horizontal')],
+                                                   orientation='horizontal', range=(0,20))],
                  [sg.Button(PREFERENTIAL_ATTACHMENT), sg.Button(RING), sg.Button(STAR)],
                  [sg.Button(WHEEL), sg.Text('Spokes Direction'),
                   sg.Combo(values=['outward', 'inward'], key=SPOKES_DIRECTION, default_value='outward')],
