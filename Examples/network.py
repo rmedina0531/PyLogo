@@ -222,20 +222,25 @@ class Network_World(World):
         #create the initial connections depending on neighborhood size
         for i in range(len(circle_nodes)):
             for j in range(1, int(SimEngine.gui_get(NEIGHBORHOOD_SIZE)) + 1):
-                                                    #makes sure to loop back if over list size
-                Link(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)])
+                #makes sure to loop back if over list size
+                #only taking into account undirected links
+                if not link_exists(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)]) and \
+                        circle_nodes[i] is not circle_nodes[(i+j)%len(circle_nodes)]:
+                    Link(circle_nodes[i], circle_nodes[(i+j)%len(circle_nodes)])
 
         #rewire chance for each link
         #get rewire chance
         rewire_chance = SimEngine.gui_get(REWIRE_PROB)
+        print(len(self.links))
         for l in self.links:
             #generate random number to see if it gets rewired
             if random.random() < rewire_chance:
-                #get the first elements in the link
-                # node_to_rewire = hash(l)[0]
-                print('hello')
-                #generate the neighbors
-
+                #pick the first node in the link
+                print(str(l.agent_1)+str(l.agent_2))
+                #find all the nodes neigbors
+                #from all nodes minus the neighbors
+                    #pick one at random to create a new link
+                #make sure that new created links are ignored for future checks in this loop
     def step(self):
         #enable forces only on spring setup
         if SimEngine.gui_get(LAYOUT_TYPE) == 'spring':
