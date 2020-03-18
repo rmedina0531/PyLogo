@@ -16,7 +16,7 @@ class SimEngine:
     values = None
 
     def __init__(self, gui_left_upper, caption="Basic Model", gui_right_upper=None,
-                 patch_size=11, board_rows_cols=(51, 51), bounce=None, fps=None):
+                 patch_size=11, board_rows_cols=(51, 51), bounce=None, fps=None, clear=None):
 
         # Constants for the main loop in start() below.
         self.CTRL_D = 'D:68'
