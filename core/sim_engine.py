@@ -16,7 +16,7 @@ class SimEngine:
     values = None
 
     def __init__(self, gui_left_upper, caption="Basic Model", gui_right_upper=None,
-                 patch_size=11, board_rows_cols=(51, 51), clear=None, bounce=None, fps=None):
+                 patch_size=11, board_rows_cols=(51, 51), bounce=None, fps=None):
 
         # Constants for the main loop in start() below.
         self.CTRL_D = 'D:68'
@@ -34,8 +34,7 @@ class SimEngine:
         self.world = None
 
         self.simple_gui = SimpleGUI(gui_left_upper, caption=caption, gui_right_upper=gui_right_upper,
-                                    patch_size=patch_size, board_rows_cols=board_rows_cols,
-                                    clear=clear, bounce=bounce, fps=fps)
+                                    patch_size=patch_size, board_rows_cols=board_rows_cols, bounce=bounce, fps=fps)
         self.graph_point = None
 
     def draw_world(self):
@@ -134,10 +133,11 @@ class SimEngine:
                 self.world.mouse_click(SimEngine.values['-GRAPH-'])
 
             elif SimEngine.event == self.simple_gui.SETUP:
+                # gui.WINDOW[self.simple_gui.GOSTOP].update(disabled=False)
                 SimEngine.gui_set(self.simple_gui.GOSTOP, disabled=False)
+                # gui.WINDOW[self.simple_gui.GO_ONCE].update(disabled=False)
                 SimEngine.gui_set(self.simple_gui.GO_ONCE, disabled=False)
-                if SimEngine.gui_get('Clear?') in [True, None] :
-                    self.world.reset_all()
+                self.world.reset_all()
                 self.world.setup()
 
             elif SimEngine.event == self.simple_gui.GO_ONCE:
@@ -145,11 +145,16 @@ class SimEngine:
                 self.world.step()
 
             elif SimEngine.event == self.simple_gui.GOSTOP:
+                # gui.WINDOW[self.simple_gui.GOSTOP].update(text='stop', button_color=('white', 'red'))
                 SimEngine.gui_set(self.simple_gui.GOSTOP, text='stop', button_color=('white', 'red'))
+                # gui.WINDOW[self.simple_gui.GO_ONCE].update(disabled=True)
                 SimEngine.gui_set(self.simple_gui.GO_ONCE, disabled=True)
+                # gui.WINDOW[self.simple_gui.SETUP].update(disabled=True)
                 SimEngine.gui_set(self.simple_gui.SETUP, disabled=True)
                 returned_value = self.model_loop()
+                # gui.WINDOW['GoStop'].update(text='go', button_color=('white', 'green'))
                 SimEngine.gui_set(self.simple_gui.GOSTOP, text='go', button_color=('white', 'green'))
+                # gui.WINDOW[self.simple_gui.SETUP].update(disabled=False)
                 SimEngine.gui_set(self.simple_gui.SETUP, disabled=False)
                 self.world.final_thoughts()
                 if returned_value == self.simple_gui.EXIT:
