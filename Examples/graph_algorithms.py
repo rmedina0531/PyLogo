@@ -16,28 +16,47 @@ class Graph_Algorithms_World(Graph_World):
 
     # noinspection PyMethodMayBeStatic
     def clustering_coefficient(self):
-        def clustering_coefficient(self):
-            cluster_coefficiant_list = []
-            for node in self.agents:
-                # find all neighbors of the node
-                neighbors = []
-                # print(node)
-                for n_link in node.all_links():
-                    neighbors.append(n_link.other_side(node))
+        cluster_coefficient_list = []
+        for node in self.agents:
+            # find all neighbors of the node
+            neighbors = []
+            # print(node)
+            for n_link in node.all_links():
+                neighbors.append(n_link.other_side(node))
+            # print("number of neighbors" + str(len(neighbors)))
+            neighbors_set = set(neighbors)
+            number_of_links = 0
 
-                neighbors_set = set(neighbors)
-                number_of_links = 0
+            if len(neighbors) > 1:
                 for current_node in neighbors:
-                    neighbors_set = neighbors_set - {current_node}
-                    if len(neighbors_set) > 0:
-                        for next_node in neighbors_set:
-                            if link_exists(current_node, next_node):
-                                number_of_links += 1
-                cluster_coefficiant_list.append((2 * number_of_links) / (len(neighbors) * (len(neighbors) - 1)))
-            average = sum(cluster_coefficiant_list) / len(cluster_coefficiant_list)
-            # SimEngine.gui_set(CLUSTER_COEFF, value=average)
-            print(average)
-            return average
+                    other_nodes = set(neighbors) - {current_node}
+                    # print("number of other neighbors" + str(len(other_nodes)))
+                    for second_node in other_nodes:
+                        if link_exists(current_node, second_node):
+                            # print('link exists')
+                            number_of_links += 1
+                # print('+++++++++++')
+                # print(number_of_links/2)
+                # print(((len(neighbors) * (len(neighbors)- 1))/2))
+                cluster_coefficient_list.append((number_of_links/2) / ((len(neighbors) * (len(neighbors)- 1))/2))
+
+            # for current_node in neighbors:
+            #     neighbors_set = neighbors_set - {current_node}
+            #     if len(neighbors_set) > 1:
+            #         for next_node in neighbors_set:
+            #             if link_exists(current_node, next_node):
+            #                 number_of_links += 1
+            #         # cluster_coefficient_list.append((2 * (number_of_links)) / (len(neighbors) * (len(neighbors) - 1)))
+            #
+            #         print('links ' + str(number_of_links))
+            #         # print('neighbors ' + len(neighbors))
+            #         print('possible ' + str((len(neighbors_set) * (len(neighbors_set)- 1))/2))
+            #         cluster_coefficient_list.append((number_of_links/2) / ((len(neighbors_set) * (len(neighbors_set)- 1))/2))
+
+        average = sum(cluster_coefficient_list) / len(cluster_coefficient_list)
+        # SimEngine.gui_set(CLUSTER_COEFF, value=average)
+        # print(average)
+        return average
 
     def compute_metrics(self):
         cluster_coefficient = self.clustering_coefficient()
