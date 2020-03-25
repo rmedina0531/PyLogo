@@ -149,11 +149,25 @@ class Graph_Algorithms_World(Graph_World):
                         # create the new link add it to the list of links to ignore
                         Link(l.agent_1, new_neighbor)
 
+        ###preferential attachment written by Ricardo
         if graph_type is PREF_ATTACHMENT:
             #make a link first
             Link(ring_node_list[0], ring_node_list[1])
             for node in ring_node_list[2:]:
                 self.pref_attachment(node)
+
+        ###preferential attchment written by Samantha
+        # if graph_type is PREF_ATTACHMENT:
+        #     Link(ring_node_list[0], ring_node_list[1])
+        #     for i in ring_node_list[2:]:
+        #         other_agents = [a for a in ring_node_list if a is not i]
+        #         linked_agent_pairs = [(l.agent_1, l.agent_2) for l in Graph_Algorithms_World.links if
+        #                               not l.includes(i)]
+        #         linked_agents = [a for pair in linked_agent_pairs for a in pair]
+        #         if not Graph_Algorithms_World.links:
+        #             Link(i, choice(linked_agents))
+        #         else:
+        #             Link(i, choice(other_agents))
 
     def pref_attachment(self, node):
         #get all nodes that are currently in a link
