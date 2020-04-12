@@ -176,10 +176,8 @@ class Braess_Road_World(World):
     def select_route(self):
         algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
 
-    def patches_line(self, a, b):
-        #same column infinite slope
-        # print(b.col)
-        # print(a.col)
+    def patches_line(self, a: Patch, b: Patch) -> [Patch]:
+        #returns all the patches between a and b
         output = []
         if b.col == a.col:
             start = a if a.row < b.row else b
@@ -209,7 +207,7 @@ class Braess_Road_World(World):
             return output
 
 
-    def draw_road(self, road_type, start_patch, stop_patch):
+    def draw_road(self, road_type, start_patch: Patch, stop_patch: Patch):
         if road_type == VARIABLE_CONGESTION:
             start_patch = World.patches_array[start_patch.row][start_patch.col + 1]
             stop_patch = World.patches_array[stop_patch.row][stop_patch.col - 1]
