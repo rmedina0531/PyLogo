@@ -66,13 +66,10 @@ class Braess_Road_World(World):
         self.middle_on = False
 
     def setup(self):
-
-
         # Clear everything
         self.reset()
 
         # Set the corner patches
-
         self.top_left_patch: Patch = World.patches_array[2][2]
         self.top_right_patch: Patch = World.patches_array[2][PATCH_COLS-3]
         self.bottom_left_patch: Patch = World.patches_array[PATCH_ROWS - 3][2]
@@ -168,7 +165,16 @@ class Braess_Road_World(World):
     def check_middle(self):
         if self.middle_on != self.middle_prev:
             if self.middle_on:
-                pass
+                self.draw_road(BRAESS_ROAD_ENABLED, self.top_right_patch, self.bottom_left_patch)
+                self.middle_prev = SimEngine.gui_get(MIDDLE_ON)
+            else:
+                braess_road_commuters = [x for x in self.agent_class if x.route == BRAESS_ROAD_ROUTE]
+                if len(braess_road_commuters) > 0:
+                    self.draw_road(BRAESS_ROAD_DISABLED, self.top_right_patch, self.bottom_left_patch)
+                    self.middle_prev = SimEngine.gui_get(MIDDLE_ON)
+
+    def select_route(self):
+        algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
 
     def patches_line(self, a, b):
         #same column infinite slope
@@ -254,14 +260,31 @@ class Braess_Road_World(World):
 import PySimpleGUI as sg
 MIDDLE_ON = 'middle_on'
 SPAWN_RATE = 'spawn_rate'
+SELECTION_ALGORITHM = 'mode'
+BEST_KNOWN = 'Best Known'
+EMPIRICAL_ANALYTICAl = 'Empirical Analytical'
+PROBABILISTIC_GREEDY = 'Probabilistic Greedy'
+SMOOTHING = 'Smoothing'
+RANDOMNESS = 'Randomness'
 
 # switches = [sg.CB(n + '\n 1', key=n, pad=((30, 0), (0, 0)), enable_events=True)
 #                                              for n in reversed(CA_World.bin_0_to_7)]
-gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key=MIDDLE_ON, pad=((0,5), (20,0)))],
+gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key=MIDDLE_ON, pad=((0,5), (10,0)))],
                    [sg.Text('Spawn Rate', pad=((0, 5), (20, 0))),
-                    sg.Slider(key=SPAWN_RATE, default_value=10, resolution=10, range=(0, 100), pad=((0, 5), (20, 0)),
-                              orientation='horizontal')]]
+                    sg.Slider(key=SPAWN_RATE, default_value=10, resolution=10, range=(0, 100), pad=((0, 5), (10, 0)),
+                              orientation='horizontal')],
+                   [sg.Text('Smoothing', pad=((0, 5), (20, 0))),
+                    sg.Slider(key=SMOOTHING, default_value=10, resolution=1, range=(1, 100), pad=((0, 5), (10, 0)),
+                              orientation='horizontal')],
+                  [sg.Text('mode', pad=((0, 5), (20, 0))),
+                   sg.Combo([BEST_KNOWN, EMPIRICAL_ANALYTICAl, PROBABILISTIC_GREEDY], key=SELECTION_ALGORITHM,
+                            default_value=BEST_KNOWN, tooltip='Selection Algorithm', pad=((0, 5), (20, 0)))],
+                  [sg.Text('Randomness', pad=((0, 5), (20, 0))),
+                   sg.Slider(key=RANDOMNESS, default_value=16, resolution=1, range=(0, 100), pad=((0, 5), (10, 0)),
+                             orientation='horizontal')]]
 
+# sg.Combo([PREF_ATTACHMENT, RANDOM, RING, SMALL_WORLD, STAR, WHEEL], size=(11, 20),
+#                               key=GRAPH_TYPE, pad=((5, 0), (20, 0)), default_value=WHEEL, tooltip='graph type')
 if __name__ == "__main__":
     from core.agent import PyLogo
     # PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))

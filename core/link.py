@@ -62,9 +62,9 @@ class Link:
     def draw(self):
         # gui.draw_line(self.agent_1.rect.center, self.agent_2.rect.center, line_color=self.color, width=self.width)
         gui.draw_line(self.agent_1.center_pixel, self.agent_2.center_pixel, line_color=self.color, width=self.width)
-        if (my_label := self.label) is not None:
+        if (self.label) is not None:
             # Pass the label to avoid computing it twice.
-            self.draw_label(my_label)
+            self.draw_label(self.label)
 
     def draw_label(self, my_label):
         offset = int(0.5*gui.PATCH_SIZE)
