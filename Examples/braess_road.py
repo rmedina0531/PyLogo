@@ -207,7 +207,11 @@ class Braess_Road_World(World):
         if self.spawn_time >= self.spawn_rate:
             #spawn Commuter
             center_pixel = self.top_left_patch.center_pixel
-            self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=randint(0,2))
+            self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=self.select_route())
+            # if self.middle_on:
+            #     self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=randint(0,2))
+            # else:
+            #     self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=randint(0,1))
             # if new_commuter.route == TOP_ROUTE or new_commuter.route == BRAESS_ROAD:
             #     new_commuter.face(self.top_right_patch)
             # elif new_commuter.route == BOTTOM_ROUTE:
@@ -280,8 +284,12 @@ class Braess_Road_World(World):
         for patch in top_road:
             patch.delay = delay
 
+        delay = 1
         bottom_road = self.patches_line(self.bottom_left_patch, self.bottom_right_patch)[1:-1]
-        bottom_road_commuters = [x for x in World.agents if x.current_patch in bottom_road]
+        bottom_road_commuters = [x for x in World.agents if x.current_patch() in bottom_road]
+
+        # print(len(bottom_road))
+        # print(len(bottom_road_commuters))
         delay = len(bottom_road_commuters) * VARIABLE_CONGESTION_DELAY
         for patch in bottom_road:
             patch.delay = delay
@@ -298,7 +306,20 @@ class Braess_Road_World(World):
                     self.middle_prev = SimEngine.gui_get(MIDDLE_ON)
 
     def select_route(self):
+        return self.probabilistic_greedy()
+
+
         algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
+    def probabilistic_greedy(self):
+        if self.middle_on:
+            return randint(0,2)
+        else:
+            if randint(0,100) <= int(SimEngine.gui_get(RANDOMNESS)):
+                return randint(0,1)
+            else:
+                top_route_count = len([x for x in World.agents if x.route == TOP_ROUTE])
+                bottom_route_count = len([x for x in World.agents if x.route == BOTTOM_ROUTE])
+                return TOP_ROUTE if top_route_count < bottom_route_count else BOTTOM_ROUTE
 
     def patches_line(self, a: Patch, b: Patch) -> [Patch]:
         #returns all the patches between a and b
@@ -380,6 +401,13 @@ class Braess_Road_World(World):
 
     def update_gui_data(self):
         SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
+        SimEngine.gui_set(FASTEST_TOP, value=str(self.latest_top_time))
+        SimEngine.gui_set(FASTEST_MIDDLE, value=str(self.latest_middle_time))
+        SimEngine.gui_set(FASTEST_BOTTOM, value=str(self.latest_bottom_time))
+        # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
+        # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
+        # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
+        # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
 # ############################################## Define GUI ############################################## #
 import PySimpleGUI as sg
 MIDDLE_ON = 'middle_on'
@@ -391,6 +419,9 @@ PROBABILISTIC_GREEDY = 'Probabilistic Greedy'
 SMOOTHING = 'Smoothing'
 RANDOMNESS = 'Randomness'
 AVERAGE = 'average'
+FASTEST_TOP = 'fastest top'
+FASTEST_MIDDLE = 'fastest middle'
+FASTEST_BOTTOM = 'fastest bottom'
 
 # switches = [sg.CB(n + '\n 1', key=n, pad=((30, 0), (0, 0)), enable_events=True)
 #                                              for n in reversed(CA_World.bin_0_to_7)]
@@ -407,11 +438,19 @@ gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key
                   [sg.Text('Randomness', pad=((0, 5), (20, 0))),
                    sg.Slider(key=RANDOMNESS, default_value=16, resolution=1, range=(0, 100), pad=((0, 5), (10, 0)),
                              orientation='horizontal')],
-                  [sg.Text('Average='), sg.Text('0', key=AVERAGE)]]
+                  [sg.Text('Average = '), sg.Text('         0', key=AVERAGE)],
+                  [sg.Text('Fastest Top Time = '), sg.Text('         0', key=FASTEST_TOP)],
+                  [sg.Text('Fastest Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
+                  [sg.Text('Fastest Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)]]
+                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
+                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
+                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
+                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],]
 
 # sg.Combo([PREF_ATTACHMENT, RANDOM, RING, SMALL_WORLD, STAR, WHEEL], size=(11, 20),
 #                               key=GRAPH_TYPE, pad=((5, 0), (20, 0)), default_value=WHEEL, tooltip='graph type')
 if __name__ == "__main__":
     from core.agent import PyLogo
     # PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))
-    PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter, gui_left_upper=gui_left_upper, patch_class=Braess_Road_Patch)
+    PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter,
+           gui_left_upper=gui_left_upper, patch_class=Braess_Road_Patch, fps=5)
