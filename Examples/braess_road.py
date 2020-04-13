@@ -17,7 +17,7 @@ CONSTANT_CONGESTION = 1
 BRAESS_ROAD_ENABLED = 2
 BRAESS_ROAD_DISABLED = 3
 
-CONSTANT_CONGESTION_DELAY = 10
+CONSTANT_CONGESTION_DELAY = 15
 #variable congestion delay is # of vehicles * the constant below
 VARIABLE_CONGESTION_DELAY = 2
 
@@ -312,7 +312,22 @@ class Braess_Road_World(World):
         algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
     def probabilistic_greedy(self):
         if self.middle_on:
-            return randint(0,2)
+            top_road_time = self.road_travel_time(self.top_right_patch, self.top_left_patch)
+            bottom_road_time = self.road_travel_time(self.bottom_right_patch, self.bottom_left_patch)
+            left_road_time = self.road_travel_time(self.top_left_patch, self.bottom_left_patch)
+            right_road_time = self.road_travel_time(self.top_right_patch, self.bottom_right_patch)
+
+            top_route_time = top_road_time + right_road_time
+            middle_route_time = top_road_time + bottom_road_time
+            bottom_route_time = left_road_time + bottom_road_time
+
+            if top_road_time < middle_route_time and top_road_time < bottom_road_time:
+                return TOP_ROUTE
+            if bottom_road_time < middle_route_time and bottom_road_time < top_road_time:
+                return BOTTOM_ROUTE
+            else:
+                return BRAESS_ROAD_ROUTE
+
         else:
             if randint(0,100) <= int(SimEngine.gui_get(RANDOMNESS)):
                 return randint(0,1)
@@ -320,6 +335,23 @@ class Braess_Road_World(World):
                 top_route_count = len([x for x in World.agents if x.route == TOP_ROUTE])
                 bottom_route_count = len([x for x in World.agents if x.route == BOTTOM_ROUTE])
                 return TOP_ROUTE if top_route_count < bottom_route_count else BOTTOM_ROUTE
+
+    def road_travel_time(self, start_patch, stop_patch):
+        #find all the commuters on the segment of road
+        road = [patch for patch in self.patches_line(start_patch, stop_patch)[1:-1]]
+
+        #calculat e the travel time of the road segment
+        road_time = 0
+        for patch in road:
+            road_time += patch.delay
+
+        return road_time
+
+    def commuters_on_road(self, start_patch, stop_patch):
+        road_commuters = []
+        road = [patch for patch in self.patches_line(start_patch, stop_patch)[1,:-1]]
+        road_commuters.append([commuter for commuter in road if commuter.current_patch() in road])
+
 
     def patches_line(self, a: Patch, b: Patch) -> [Patch]:
         #returns all the patches between a and b
@@ -427,7 +459,7 @@ FASTEST_BOTTOM = 'fastest bottom'
 #                                              for n in reversed(CA_World.bin_0_to_7)]
 gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key=MIDDLE_ON, pad=((0,5), (10,0)))],
                    [sg.Text('Spawn Rate', pad=((0, 5), (20, 0))),
-                    sg.Slider(key=SPAWN_RATE, default_value=10, resolution=10, range=(0, 100), pad=((0, 5), (10, 0)),
+                    sg.Slider(key=SPAWN_RATE, default_value=60, resolution=10, range=(4, 140), pad=((0, 5), (10, 0)),
                               orientation='horizontal')],
                    [sg.Text('Smoothing', pad=((0, 5), (20, 0))),
                     sg.Slider(key=SMOOTHING, default_value=10, resolution=1, range=(1, 100), pad=((0, 5), (10, 0)),
