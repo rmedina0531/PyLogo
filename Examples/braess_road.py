@@ -19,7 +19,7 @@ BRAESS_ROAD_DISABLED = 3
 
 CONSTANT_CONGESTION_DELAY = 15
 #variable congestion delay is # of vehicles * the constant below
-VARIABLE_CONGESTION_DELAY = 2
+# VARIABLE_CONGESTION_DELAY = 2
 
 class Braess_Road_Patch(Patch):
     def __init__(self, *args, **kwargs):
@@ -263,7 +263,7 @@ class Braess_Road_World(World):
         top_road = self.patches_line(self.top_left_patch, self.top_right_patch)[1:-1]
         top_road_commuters = [x for x in World.agents if x.current_patch() in top_road]
 
-        delay = len(top_road_commuters) * VARIABLE_CONGESTION_DELAY
+        delay = len(top_road_commuters) * SimEngine.gui_get(VARIABLE_CONGESTION_DELAY)
         # print(len(top_road_commuters))
         for patch in top_road:
             patch.delay = delay
@@ -273,7 +273,7 @@ class Braess_Road_World(World):
         bottom_road = self.patches_line(self.bottom_left_patch, self.bottom_right_patch)[1:-1]
         bottom_road_commuters = [x for x in World.agents if x.current_patch() in bottom_road]
 
-        delay = len(bottom_road_commuters) * VARIABLE_CONGESTION_DELAY
+        delay = len(bottom_road_commuters) * SimEngine.gui_get(VARIABLE_CONGESTION_DELAY)
         for patch in bottom_road:
             patch.delay = delay
 
@@ -421,7 +421,7 @@ class Braess_Road_World(World):
                 p.set_color(Color('Yellow'))
                 p.road_type = VARIABLE_CONGESTION
 
-                World.patches_array[p.row][p.col        +1].set_color(Color('Grey'))
+                World.patches_array[p.row][p.col+1].set_color(Color('Grey'))
                 World.patches_array[p.row][p.col-1].set_color(Color('Grey'))
 
         if road_type == BRAESS_ROAD_ENABLED or road_type == BRAESS_ROAD_DISABLED:
@@ -452,6 +452,9 @@ class Braess_Road_World(World):
         SimEngine.gui_set(FASTEST_TOP, value=str(self.latest_top_time))
         SimEngine.gui_set(FASTEST_MIDDLE, value=str(self.latest_middle_time))
         SimEngine.gui_set(FASTEST_BOTTOM, value=str(self.latest_bottom_time))
+
+    def update_ticks(self):
+        SimEngine.gui_set(TICKS, value=str(self.ticks))
         # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
         # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
         # SimEngine.gui_set(AVERAGE, value=str(self.avg_time))
@@ -470,6 +473,8 @@ AVERAGE = 'average'
 FASTEST_TOP = 'fastest top'
 FASTEST_MIDDLE = 'fastest middle'
 FASTEST_BOTTOM = 'fastest bottom'
+VARIABLE_CONGESTION_DELAY = "Dynamic"
+TICKS = 'Ticks'
 
 # switches = [sg.CB(n + '\n 1', key=n, pad=((30, 0), (0, 0)), enable_events=True)
 #                                              for n in reversed(CA_World.bin_0_to_7)]
@@ -486,10 +491,14 @@ gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key
                   [sg.Text('Randomness', pad=((0, 5), (20, 0))),
                    sg.Slider(key=RANDOMNESS, default_value=16, resolution=1, range=(0, 100), pad=((0, 5), (10, 0)),
                              orientation='horizontal')],
+                  [sg.Text('Dynamic', pad=((0, 5), (20, 0))),
+                    sg.Slider(key=VARIABLE_CONGESTION_DELAY, default_value=2, resolution=1, range=(1, 10), pad=((0, 5), (10, 0)),
+                              orientation='horizontal')],
                   [sg.Text('Average = '), sg.Text('         0', key=AVERAGE)],
-                  [sg.Text('Average Top Time = '), sg.Text('         0', key=FASTEST_TOP)],
-                  [sg.Text('Average Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
-                  [sg.Text('Average Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)]]
+                  [sg.Text('Fastest Top Time = '), sg.Text('         0', key=FASTEST_TOP)],
+                  [sg.Text('Fastest Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
+                  [sg.Text('Fastest Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)],
+                  [sg.Text('Ticks = '), sg.Text('         0', key=TICKS)]]
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
