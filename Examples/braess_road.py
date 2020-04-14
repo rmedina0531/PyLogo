@@ -91,10 +91,10 @@ class Braess_Road_World(World):
         super().__init__(*args, **kwargs)
         self.reset()
 
-        Braess_Road_World.top_left_patch: Patch = World.patches_array[2][2]
-        Braess_Road_World.top_right_patch: Patch = World.patches_array[2][PATCH_COLS - 3]
-        Braess_Road_World.bottom_left_patch: Patch = World.patches_array[PATCH_ROWS - 3][2]
-        Braess_Road_World.bottom_right_patch: Patch = World.patches_array[PATCH_ROWS - 3][PATCH_COLS - 3]
+        Braess_Road_World.top_left_patch= World.patches_array[2][2]
+        Braess_Road_World.top_right_patch = World.patches_array[2][PATCH_COLS - 3]
+        Braess_Road_World.bottom_left_patch = World.patches_array[PATCH_ROWS - 3][2]
+        Braess_Road_World.bottom_right_patch = World.patches_array[PATCH_ROWS - 3][PATCH_COLS - 3]
 
     def reset(self):
         self.reset_all()
@@ -125,13 +125,7 @@ class Braess_Road_World(World):
         # Clear everything
         self.reset()
 
-        # Set the corner patches
-        # self.top_left_patch: Patch = World.patches_array[2][2]
-        # self.top_right_patch: Patch = World.patches_array[2][PATCH_COLS-3]
-        # self.bottom_left_patch: Patch = World.patches_array[PATCH_ROWS - 3][2]
-        # self.bottom_right_patch: Patch = World.patches_array[PATCH_ROWS - 3][PATCH_COLS - 3]
-
-        #grab all gui variables
+        #grab gui variables
         self.spawn_rate = SimEngine.gui_get(SPAWN_RATE)
 
         # Set up the roads
@@ -140,23 +134,24 @@ class Braess_Road_World(World):
     def step(self):
         self.check_middle()
         self.spawn_commuters()
-        #determine congestion
         self.determine_congestion()
-        #move commuters
+
+        #stores all commuters that have set their end commute flag
         to_remove = []
+
         for commuter in World.agents:
-            #list of commuters to remove at the end of this method
             commuter.move()
             #check if any commuters have finished their commute
             if commuter.commute_complete:
                 self.commuter_stats(commuter)
                 to_remove.append(commuter)
+
+        #removes all commuters in the to_remove list
         for commuter in to_remove:
             World.agents.remove(commuter)
 
     def commuter_stats(self, commuter):
         # calculates travel times and adds them to the appropurate route tracker
-        # kills commuter
 
         # rate is the frame rate at wchich the sim is running
         travel_time = (World.ticks - commuter.birth_tick)
@@ -210,16 +205,6 @@ class Braess_Road_World(World):
             #spawn Commuter
             center_pixel = self.top_left_patch.center_pixel
             self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=self.select_route())
-            # if self.middle_on:
-            #     self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=randint(0,2))
-            # else:
-            #     self.agent_class(center_pixel=center_pixel, birth_tick=World.ticks, route=randint(0,1))
-            # if new_commuter.route == TOP_ROUTE or new_commuter.route == BRAESS_ROAD:
-            #     new_commuter.face(self.top_right_patch)
-            # elif new_commuter.route == BOTTOM_ROUTE:
-            #     new_commuter.face(self.bottom_left_patch)
-
-
             self.cars_spawned += 1
 
             self.spawn_time = 0
@@ -314,21 +299,24 @@ class Braess_Road_World(World):
         if SimEngine.gui_get(SELECTION_ALGORITHM) == PROBABILISTIC_GREEDY:
             pass
         if SimEngine.gui_get(SELECTION_ALGORITHM) == BEST_KNOWN:
-            pass
+            return self.best_route()
 
 
         algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
     def probabilistic_analytic(self):
         if self.middle_on:
+            #find the road times of all segments
             top_road_time = self.road_travel_time(self.top_right_patch, self.top_left_patch)
             bottom_road_time = self.road_travel_time(self.bottom_right_patch, self.bottom_left_patch)
             left_road_time = self.road_travel_time(self.top_left_patch, self.bottom_left_patch)
             right_road_time = self.road_travel_time(self.top_right_patch, self.bottom_right_patch)
 
+            #find all the route times
             top_route_time = top_road_time + right_road_time
             middle_route_time = top_road_time + bottom_road_time
             bottom_route_time = left_road_time + bottom_road_time
 
+            #select the one that has the least projected time with the current agents
             if top_route_time < middle_route_time and top_route_time < bottom_route_time:
                 return TOP_ROUTE
             if bottom_route_time < middle_route_time and bottom_route_time < top_route_time:
@@ -343,6 +331,26 @@ class Braess_Road_World(World):
                 top_route_count = len([x for x in World.agents if x.route == TOP_ROUTE])
                 bottom_route_count = len([x for x in World.agents if x.route == BOTTOM_ROUTE])
                 return TOP_ROUTE if top_route_count < bottom_route_count else BOTTOM_ROUTE
+
+    def best_route(self):
+        if self.middle_on:
+            if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
+                return randint(0, 2)
+            else:
+                if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
+                    return TOP_ROUTE
+                if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
+                    return BRAESS_ROAD_ROUTE
+                else:
+                    return BOTTOM_ROUTE
+        else:
+            if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+                return randint(0,1)
+            else:
+                if self.latest_top_time < self.latest_bottom_time:
+                    return TOP_ROUTE
+                else:
+                    return BOTTOM_ROUTE
 
     def road_travel_time(self, start_patch, stop_patch):
         #find all the commuters on the segment of road
@@ -413,7 +421,7 @@ class Braess_Road_World(World):
                 p.set_color(Color('Yellow'))
                 p.road_type = VARIABLE_CONGESTION
 
-                World.patches_array[p.row][p.col+1].set_color(Color('Grey'))
+                World.patches_array[p.row][p.col        +1].set_color(Color('Grey'))
                 World.patches_array[p.row][p.col-1].set_color(Color('Grey'))
 
         if road_type == BRAESS_ROAD_ENABLED or road_type == BRAESS_ROAD_DISABLED:
@@ -479,9 +487,9 @@ gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key
                    sg.Slider(key=RANDOMNESS, default_value=16, resolution=1, range=(0, 100), pad=((0, 5), (10, 0)),
                              orientation='horizontal')],
                   [sg.Text('Average = '), sg.Text('         0', key=AVERAGE)],
-                  [sg.Text('Fastest Top Time = '), sg.Text('         0', key=FASTEST_TOP)],
-                  [sg.Text('Fastest Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
-                  [sg.Text('Fastest Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)]]
+                  [sg.Text('Average Top Time = '), sg.Text('         0', key=FASTEST_TOP)],
+                  [sg.Text('Average Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
+                  [sg.Text('Average Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)]]
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
                   # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
