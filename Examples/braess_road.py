@@ -306,11 +306,16 @@ class Braess_Road_World(World):
                     self.middle_prev = SimEngine.gui_get(MIDDLE_ON)
 
     def select_route(self):
-        return self.probabilistic_greedy()
+        if SimEngine.gui_get(SELECTION_ALGORITHM) == EMPIRICAL_ANALYTICAl:
+            return self.probabilistic_analytic()
+        if SimEngine.gui_get(SELECTION_ALGORITHM) == PROBABILISTIC_GREEDY:
+            pass
+        if SimEngine.gui_get(SELECTION_ALGORITHM) == BEST_KNOWN:
+            pass
 
 
         algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
-    def probabilistic_greedy(self):
+    def probabilistic_analytic(self):
         if self.middle_on:
             top_road_time = self.road_travel_time(self.top_right_patch, self.top_left_patch)
             bottom_road_time = self.road_travel_time(self.bottom_right_patch, self.bottom_left_patch)
@@ -485,4 +490,4 @@ if __name__ == "__main__":
     from core.agent import PyLogo
     # PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))
     PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter,
-           gui_left_upper=gui_left_upper, patch_class=Braess_Road_Patch, fps=5)
+           gui_left_upper=gui_left_upper, patch_class=Braess_Road_Patch)
