@@ -297,12 +297,68 @@ class Braess_Road_World(World):
         if SimEngine.gui_get(SELECTION_ALGORITHM) == EMPIRICAL_ANALYTICAl:
             return self.probabilistic_analytic()
         if SimEngine.gui_get(SELECTION_ALGORITHM) == PROBABILISTIC_GREEDY:
-            pass
+            return self.greedy()
         if SimEngine.gui_get(SELECTION_ALGORITHM) == BEST_KNOWN:
             return self.best_route()
 
+    # turtle context reporter
+    # assigns a route to the commuter with a probability propotional to
+    # how much better the route is than the other routes
+    def greedy(self):
+            if self.middle_on:
+                if self.latest_middle_time == 0 or self.latest_top_time == 0 or self.latest_bottom_time == 0:
+                    return randint(0,2)
+                else:
+                    top_different = 2 - self.latest_top_time
+                    if top_different < 0:
+                        top_different = 0
+                    top_different = top_different **  (int(SimEngine.gui_get(RANDOMNESS)) / 10)
+                    bottom_different = 2 - self.latest_bottom_time
+                    if bottom_different < 0:
+                        bottom_different = 0
+                    bottom_different = bottom_different **  (int(SimEngine.gui_get(RANDOMNESS)) / 10)
+                    middle_different = 2 - self.latest_middle_time
+                    if middle_different < 0:
+                        middle_different = 0
+                    middle_different = middle_different ** (int(SimEngine.gui_get(RANDOMNESS)) / 10)
 
-        algorithm = SimEngine.gui_get(SELECTION_ALGORITHM)
+                    sigma1 = 0
+                    sigma2 = 0
+                    if not (top_different + bottom_different + middle_different) == 0:
+                        sigma1 = top_different / (top_different + bottom_different + middle_different)
+                        sigma2 = bottom_different / (top_different + bottom_different + middle_different)
+                    else:
+                        sigma1 = 0.33
+                        sigma2 = 0.33
+
+                    self.top_prob = sigma1
+                    self.bottom_prob = sigma2
+                    self.middle_prob = 1 - sigma1 - sigma2
+                    split1 = 1000 * sigma1
+                    split2 = 1000 * (sigma1 + sigma2)
+                    rand = randint(0, 999)
+                    if rand < split1:
+                        return 0
+                    else:
+                        if rand < split2:
+                            return 1
+                        else:
+                            return 2
+            else:
+                if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+                    return randint(0,1)
+                else:
+                    top_different = (2 - self.latest_top_time) ** (int(SimEngine.gui_get(RANDOMNESS)) / 10)
+                    bottom_different = (2 - self.latest_bottom_time) ** (int(SimEngine.gui_get(RANDOMNESS)) / 10)
+                    sigma = top_different / (top_different + bottom_different)
+                    top_prob = sigma
+                    bottom_prop = 1 - sigma
+                    split = 1000 * sigma
+                    if randint(0, 999) < split:
+                        return 0
+                    else:
+                        return 1
+
     def probabilistic_analytic(self):
         if self.middle_on:
             #find the road times of all segments
@@ -332,25 +388,81 @@ class Braess_Road_World(World):
                 bottom_route_count = len([x for x in World.agents if x.route == BOTTOM_ROUTE])
                 return TOP_ROUTE if top_route_count < bottom_route_count else BOTTOM_ROUTE
 
+    #turtle context reporter
+    # assigns a route to the commuter that currently has the best travel time
+    # with some random chance of deviating to a less optimal route
+
+
     def best_route(self):
         if self.middle_on:
-            if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
-                return randint(0, 2)
-            else:
-                if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
-                    return TOP_ROUTE
-                if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
-                    return BRAESS_ROAD_ROUTE
+            if self.middle_on:
+                if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
+                    return randint(0, 2)  # should this be radint(0 , 3) ?? ERASE COMMENT AFTER REVIEW
                 else:
-                    return BOTTOM_ROUTE
-        else:
-            if self.latest_top_time == 0 or self.latest_bottom_time == 0:
-                return randint(0,1)
+                    if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
+                        return TOP_ROUTE
+                    if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
+                        return BRAESS_ROAD_ROUTE
+                    else:
+                        return BOTTOM_ROUTE
             else:
-                if self.latest_top_time < self.latest_bottom_time:
-                    return TOP_ROUTE
+                if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+                    return randint(0, 1)
                 else:
-                    return BOTTOM_ROUTE
+                    if self.latest_top_time < self.latest_bottom_time:
+                        return TOP_ROUTE
+                    else:
+                        return BOTTOM_ROUTE
+
+        # CAN DELETE AFTER REVIEW --> the below lines are the way I(Sam) did best_known, however I saw someone had one as here as well
+        #   so I added mine so you can see what/how I did it but I choose to comment it out because there's a few errors
+        #   I believe in the indents.
+        #
+        #     if self.latest_middle_time == 0 or self.latest_top_time == 0 or self.latest_bottom_time == 0:
+        #         return randint(0, 2)
+        # else:
+        #     if randint(0, 99) < 100 - int(SimEngine.gui_get(RANDOMNESS)):
+        #         if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
+        #             return 2
+        #     else:
+        #         if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
+        #             return 0
+        #         else:
+        #             return 1
+        #         else:
+        #             return randint(0, 2)
+        #     else:
+        #     if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+        #      return randint(0, 1)
+        #     else:
+        #     if randint(0, 99) < 100 - int(SimEngine.gui_get(RANDOMNESS)):
+        #     if self.latest_top_time < self.latest_bottom_time:
+        #         return 0
+        #     else:
+        #         return 1
+        #     else:
+        #         return randint(0, 1)
+
+    #old version
+    # def best_route(self):
+    #     if self.middle_on:
+    #         if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
+    #             return randint(0, 2)
+    #         else:
+    #             if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
+    #                 return TOP_ROUTE
+    #             if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
+    #                 return BRAESS_ROAD_ROUTE
+    #             else:
+    #                 return BOTTOM_ROUTE
+    #     else:
+    #         if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+    #             return randint(0,1)
+    #         else:
+    #             if self.latest_top_time < self.latest_bottom_time:
+    #                 return TOP_ROUTE
+    #             else:
+    #                 return BOTTOM_ROUTE
 
     def road_travel_time(self, start_patch, stop_patch):
         #find all the commuters on the segment of road
