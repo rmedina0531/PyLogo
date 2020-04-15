@@ -392,28 +392,8 @@ class Braess_Road_World(World):
     # assigns a route to the commuter that currently has the best travel time
     # with some random chance of deviating to a less optimal route
 
-
-    def best_route(self):
-        if self.middle_on:
-            if self.middle_on:
-                if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
-                    return randint(0, 2)  # should this be radint(0 , 3) ?? ERASE COMMENT AFTER REVIEW
-                else:
-                    if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
-                        return TOP_ROUTE
-                    if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
-                        return BRAESS_ROAD_ROUTE
-                    else:
-                        return BOTTOM_ROUTE
-            else:
-                if self.latest_top_time == 0 or self.latest_bottom_time == 0:
-                    return randint(0, 1)
-                else:
-                    if self.latest_top_time < self.latest_bottom_time:
-                        return TOP_ROUTE
-                    else:
-                        return BOTTOM_ROUTE
-
+    # old version
+    # def best_route(self):
         # CAN DELETE AFTER REVIEW --> the below lines are the way I(Sam) did best_known, however I saw someone had one as here as well
         #   so I added mine so you can see what/how I did it but I choose to comment it out because there's a few errors
         #   I believe in the indents.
@@ -443,26 +423,26 @@ class Braess_Road_World(World):
         #     else:
         #         return randint(0, 1)
 
-    #old version
-    # def best_route(self):
-    #     if self.middle_on:
-    #         if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
-    #             return randint(0, 2)
-    #         else:
-    #             if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
-    #                 return TOP_ROUTE
-    #             if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
-    #                 return BRAESS_ROAD_ROUTE
-    #             else:
-    #                 return BOTTOM_ROUTE
-    #     else:
-    #         if self.latest_top_time == 0 or self.latest_bottom_time == 0:
-    #             return randint(0,1)
-    #         else:
-    #             if self.latest_top_time < self.latest_bottom_time:
-    #                 return TOP_ROUTE
-    #             else:
-    #                 return BOTTOM_ROUTE
+
+    def best_route(self):
+        if self.middle_on:
+            if self.latest_top_time == 0 or self.latest_bottom_time == 0 or self.latest_middle_time == 0:
+                return randint(0, 2)
+            else:
+                if self.latest_top_time < self.latest_middle_time and self.latest_top_time < self.latest_bottom_time:
+                    return TOP_ROUTE
+                if self.latest_middle_time < self.latest_top_time and self.latest_middle_time < self.latest_bottom_time:
+                    return BRAESS_ROAD_ROUTE
+                else:
+                    return BOTTOM_ROUTE
+        else:
+            if self.latest_top_time == 0 or self.latest_bottom_time == 0:
+                return randint(0,1)
+            else:
+                if self.latest_top_time < self.latest_bottom_time:
+                    return TOP_ROUTE
+                else:
+                    return BOTTOM_ROUTE
 
     def road_travel_time(self, start_patch, stop_patch):
         #find all the commuters on the segment of road
@@ -588,8 +568,6 @@ FASTEST_BOTTOM = 'fastest bottom'
 VARIABLE_CONGESTION_DELAY = "Dynamic"
 TICKS = 'Ticks'
 
-# switches = [sg.CB(n + '\n 1', key=n, pad=((30, 0), (0, 0)), enable_events=True)
-#                                              for n in reversed(CA_World.bin_0_to_7)]
 gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key=MIDDLE_ON, pad=((0,5), (10,0)))],
                    [sg.Text('Spawn Rate', pad=((0, 5), (20, 0))),
                     sg.Slider(key=SPAWN_RATE, default_value=60, resolution=10, range=(4, 140), pad=((0, 5), (10, 0)),
@@ -611,14 +589,7 @@ gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key
                   [sg.Text('Fastest Middle Time = '), sg.Text('         0', key=FASTEST_MIDDLE)],
                   [sg.Text('Fastest Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)],
                   [sg.Text('Ticks = '), sg.Text('         0', key=TICKS)]]
-                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
-                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
-                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],
-                  # [sg.Text('Average= '), sg.Text('         0', key=AVERAGE)],]
 
-# sg.Combo([PREF_ATTACHMENT, RANDOM, RING, SMALL_WORLD, STAR, WHEEL], size=(11, 20),
-#                               key=GRAPH_TYPE, pad=((5, 0), (20, 0)), default_value=WHEEL, tooltip='graph type')
-if __name__ == "__main__":
     from core.agent import PyLogo
     # PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))
     PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter,
