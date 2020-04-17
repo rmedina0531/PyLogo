@@ -590,7 +590,8 @@ gui_left_upper = [[sg.Text('Middle On?', pad=((0,5), (20,0))), sg.CB('True', key
                   [sg.Text('Fastest Bottom Time = '), sg.Text('         0', key=FASTEST_BOTTOM)],
                   [sg.Text('Ticks = '), sg.Text('         0', key=TICKS)]]
 
-    from core.agent import PyLogo
-    # PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))
-    PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter,
+from core.agent import PyLogo
+
+# PyLogo(Braess_Road_World, 'Braess Road Paradox', gui_left_upper, bounce=True, patch_size=9, board_rows_cols=(71, 71))
+PyLogo(world_class=Braess_Road_World, caption='Braess Road Paradox', agent_class=Commuter,
            gui_left_upper=gui_left_upper, patch_class=Braess_Road_Patch)
