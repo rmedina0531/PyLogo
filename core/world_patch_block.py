@@ -221,7 +221,7 @@ class World:
             agent.draw()
 
     def final_thoughts(self):
-        """ Add any final tests, data gathering, summarization, etc. here. """
+        """ Add any final tests, data gathering, summa  rization, etc. here. """
         pass
         # Uncomment this code to see how well the (@lru) caches work.
         # print()

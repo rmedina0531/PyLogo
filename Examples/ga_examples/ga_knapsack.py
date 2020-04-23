@@ -29,7 +29,7 @@ class Knapsack_Problem:
     problems = {'Problem 1': {'capacity': 9,
                               'items': [Item(6, 2), Item(5, 3), Item(8, 6), Item(9, 7),
                                         Item(6, 5), Item(7, 9), Item(3, 4)],
-                              'solution': '1001000'},
+                                  'solution': '1001000'},
                 'Problem 2': {'capacity': 10,
                               'items': [Item(4, 1), Item(8, 4), Item(7, 5), Item(9, 6), ],
                               'solution': '1101'},
@@ -205,14 +205,18 @@ knapsack_gui_left_upper = gui_left_upper + [
      ],
 
     [sg.Text('Problem selection', pad=(None, (20, 0))),
-     sg.Combo(key='Problem', default_value=choice(Knapsack_Problem.problem_names), pad=((10, 0), (20, 0)),
+     # sg.Combo(key='Problem', default_value=choice(Knapsack_Problem.problem_names), pad=((10, 0), (20, 0)),
+     #          values=Knapsack_Problem.problem_names)
+    sg.Combo(key='Problem', default_value='Problem 1', pad=((10, 0), (20, 0)),
               values=Knapsack_Problem.problem_names)
      ],
 
     [sg.Text('Fitness target:', pad=(None, (10, 0))),
      sg.Text('      ', key='fitness_target', pad=(None, (10, 0)))
      ],
-
+    [sg.Text('Max generations:', pad=(None, (10, 0))),
+     sg.Text('      ', key='Max generations', pad=(None, (10, 0)))
+     ]
     ]
 
 if __name__ == "__main__":
