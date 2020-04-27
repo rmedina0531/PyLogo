@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from inspect import getmembers
 from random import choice, random, sample, uniform
 from typing import List, Tuple
 
 from pygame import Color
 
+import core.gui as gui
 from core.agent import Agent
 from core.ga import Chromosome, GA_World, Gene, Individual, gui_left_upper
-from core.link import Link
+from core.link import Link, minimum_spanning_tree
 from core.pairs import Velocity
-from core.sim_engine import gui_get, gui_set
+from core.sim_engine import draw_links, gui_get, gui_set, SimEngine
 from core.world_patch_block import World
 
 ##added imports
@@ -45,11 +47,10 @@ class TSP_Link(Link):
         label is defined as a getter. No parentheses needed.
         Returns the length of the link.
         """
-        return str(round(self.agent_1.distance_to(self.agent_2), 1)) if gui_get('show_lengths') else None
+        return str(self.length) if gui_get('show_lengths') else None
 
 
 class TSP_Chromosome(Chromosome):
-
     """
     An individual consists primarily of a sequence of Genes, called
     a chromosome. We create a class for it simply because it's a
@@ -117,6 +118,7 @@ class TSP_Chromosome(Chromosome):
 
         return TSP_Chromosome.random_path()
 
+##My method of spanning tree
     @staticmethod
     def minimum_spanning_tree(vertices):
         # make a dictionary of all the possible edges and their lengths
@@ -153,8 +155,12 @@ class TSP_Chromosome(Chromosome):
         return fitness
 
     def link_chromosome(self):
-        for i in range(len(self)):
-            TSP_Link(self[i], self[(i+1) % len(self)])
+        links = []
+        if len(self) > 1:
+            for i in range(len(self)):
+                lnk = TSP_Link(self[i], self[(i+1) % len(self)])
+                links.append(lnk)
+        return links
 
     def move_gene_in_chromosome(self, original_fitness: float) -> TSP_Chromosome:
         """
@@ -207,6 +213,10 @@ class TSP_Chromosome(Chromosome):
 # noinspection PyTypeChecker
 class TSP_Individual(Individual):
 
+    def __init__(self, *args, generator=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.generator = generator
+
     def __str__(self):
         return f'{round(self.fitness, 1)}: ({", ".join([str(gene) for gene in self.chromosome])})'
 
@@ -223,20 +233,63 @@ class TSP_Individual(Individual):
         return children
 
     def mutate(self) -> Individual:
-        assert isinstance(self.chromosome, TSP_Chromosome)
 
-        if uniform(0, 1) <= 0.5:
-            new_chromosome = (self.chromosome).move_gene_in_chromosome(self.fitness)
+        mutation_operations = []
+        chromo = self.chromosome
+        assert isinstance(chromo, TSP_Chromosome)
+        if gui_get('Move element'):
+            mutation_operations.append(chromo.move_gene_in_chromosome)
+        if gui_get('2-Opt'):
+            mutation_operations.append(chromo.two_opt)
+
+        # If no mutation operations have been selected, return the individual unchnged.
+        if not mutation_operations:
+            return self
         else:
-            new_chromosome = (self.chromosome).two_opt(self.fitness)
-
-        new_individual = GA_World.individual_class(new_chromosome)
-        return new_individual
+            # Otherwise, apply one of the selected mutation operation.
+            operation = choice(mutation_operations)
+            # Both of the current mutation operations require self.fitness as their argument.
+            new_chromosome = operation(self.fitness)
+            new_individual = GA_World.individual_class(new_chromosome)
+            return new_individual
 
 
 class TSP_World(GA_World):
-    
-    cycle_length = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.msp_links = None
+
+    def create_node(self):
+        new_point = self.create_random_agent(color=Color('white'), shape_name='node', scale=1)
+        new_point.set_velocity(TSP_World.random_velocity())
+        # If the same individual is in the population
+        # multiple times, don't process it more than once.
+        updated_chromos = set()
+        for ind in self.population:
+            old_chromo = ind.chromosome
+            if old_chromo not in updated_chromos:
+                # noinspection PyUnresolvedReferences
+                (new_chromo, ind.fitness) = old_chromo.add_gene_to_chromosome(ind.fitness, new_point)
+                # noinspection PyArgumentList
+                ind.chromosome = GA_World.chromosome_class(new_chromo)
+                updated_chromos.add(new_chromo)
+
+    def delete_node(self):
+        # Can't use choice with a set.
+        node = sample(World.agents, 1)[0]
+        # If the same individual is in the population
+        # multiple times, don't process it more than once.
+        updated_chromos = set()
+        for ind in self.population:
+            old_chromo = ind.chromosome
+            if old_chromo not in updated_chromos:
+                new_chromo_list = list(old_chromo)
+                new_chromo_list.remove(node)
+                new_chromo = GA_World.chromosome_class(new_chromo_list)
+                ind.chromosome = new_chromo
+                updated_chromos.add(new_chromo)
+        node.delete()
 
     def gen_gene_pool(self):
         # The gene_pool in this case are the point on the grid, which are agents.
@@ -248,36 +301,68 @@ class TSP_World(GA_World):
 
     @staticmethod
     def gen_individual():
-        gen_path_method = choice([TSP_Chromosome.greedy_path,
-                                  TSP_Chromosome.random_path,
-                                  TSP_Chromosome.spanning_tree_path])
+        path_methods = [TSP_Chromosome.random_path]
+        if gui_get('Greedy'):
+            path_methods.append(TSP_Chromosome.greedy_path)
+        if gui_get('Min spanning tree'):
+            path_methods.append(TSP_Chromosome.spanning_tree_path)
+        gen_path_method = choice(path_methods)
         chromosome_list: List = gen_path_method()
         chromo = GA_World.chromosome_class(chromosome_list)
-        individual = GA_World.individual_class(chromo)
+        individual = GA_World.individual_class(chromo, generator=gen_path_method)
         return individual
 
+    def gen_initial_population(self):
+        """
+        Generate the initial population. gen_new_individual uses gen_individual from the subclass.
+        """
+        # Must do it this way because self.gen_new_individual checks to see if each new individual
+        # is already in self.population.
+        self.population = []
+        for i in range(self.pop_size):
+            new_individual = self.gen_new_individual()
+            assert isinstance(new_individual, TSP_Individual)
+            assert isinstance(new_individual.chromosome, TSP_Chromosome)
+            generator_name = dict(getmembers(new_individual.generator))['__name__']
+            print(f'{i}. {generator_name} {"(no display)" if generator_name == "random_path" else ""}')
+            if generator_name != 'random_path':
+                msp_links = self.minimum_spanning_tree_links() if generator_name == 'spanning_tree_path' else []
+                path_links = new_individual.chromosome.link_chromosome()
+                for lnk in path_links:
+                    lnk.color = Color('red')
+                World.links = set()
+                draw_links(msp_links + path_links, World.links)
+            self.population.append(new_individual)
+
     def handle_event(self, event):
-        if event == 'cycle_length':
-            new_cycle_length = gui_get('cycle_length')
-            if new_cycle_length != TSP_World.cycle_length:
-                TSP_World.cycle_length = gui_get('cycle_length')
-                # World.links = set()
-                self.best_ind = None
-                self.population = self.initial_population()
-                # super().setup()
-                self.resume_ga()
-            return
-        super().handle_event(event)
+        if event.endswith('Node'):
+            if event == 'Create Node':
+                self.create_node()
+            elif event == 'Delete Node':
+                if len(GA_World.gene_pool) > 2:
+                    self.delete_node()
+            gui_set('nbr_points', value=len(GA_World.gene_pool))
+            self.set_results()
+        elif event == 'Reverse':
+            for gene in GA_World.gene_pool:
+                gene.velocity *= (-1)
+        else:
+            super().handle_event(event)
+
+    def minimum_spanning_tree_links(self):
+        if not self.msp_links:
+            self.msp_links = minimum_spanning_tree(list(GA_World.gene_pool))
+        return self.msp_links
 
     @staticmethod
-    def random_velocity(limit=0.5):
+    def random_velocity(limit=0.75):
         return Velocity((uniform(-limit, limit), uniform(-limit, limit)))
 
     def set_results(self):
         super().set_results()
-        World.links = set()
         best_chromosome: TSP_Chromosome = self.best_ind.chromosome
-        best_chromosome.link_chromosome()
+        World.links = set(best_chromosome.link_chromosome())
+
         # Never stop
         self.done = False
 
@@ -285,56 +370,76 @@ class TSP_World(GA_World):
         Agent.id = 1
         GA_World.individual_class = TSP_Individual
         GA_World.chromosome_class = TSP_Chromosome.factory
+        # The following GUI elements are defined in ga.py.
+        # We can't set their default values in this file's GUI.
         gui_set('Max generations', value=float('inf'))
-        self.pop_size = 50
-        gui_set('pop_size', value=self.pop_size)
+        # gui_set('pop_size', value=20)
         gui_set('prob_random_parent', value=20)
+
+        # Don't display the following standard GA features.
         gui_set('Discrep:', visible=False)
         gui_set('discrepancy', visible=False)
         gui_set('Gens:', visible=False)
         gui_set('generations', visible=False)
+        (SimEngine.event, SimEngine.values) = gui.WINDOW.read(timeout=10)
         super().setup()
 
     def step(self):
         """
         Update the world by moving the agents.
         """
-        if gui_get('move_points'):
+        if gui_get('move points'):
             for agent in GA_World.gene_pool:
                 agent.move_by_velocity()
-                if self.best_ind:
-                    self.best_ind.fitness = self.best_ind.compute_fitness()
-                if random() < 0.0001:
+                if random() < 0.001:
                     agent.set_velocity(TSP_World.random_velocity())
+            for ind in self.population:
+                ind.fitness = ind.compute_fitness()
+            self.best_ind = None
         super().step()
-        # Never stop
-        self.done = False
 
 
 # ############################################## Define GUI ############################################## #
 import PySimpleGUI as sg
-tsp_right_upper = [
-                     [sg.Button('Create Node', tooltip='Create a node'),
-                      sg.Button('Delete Node', tooltip='Delete one random node')]]
 
+col = [[sg.Button('Create Node', tooltip='Create a node')],
+       [sg.Button('Delete Node', tooltip='Delete one random node')]]
+
+frame_layout_node_buttons = [[sg.Column(col, pad=(None, None)),
+                              sg.Button('Reverse', tooltip='Reverse direction of motion')]]
+
+frame_layout_generators = [[sg.Checkbox('Greedy', key='Greedy', default=True)],
+                           [sg.Checkbox('Min spanning tree', key='Min spanning tree', default=True)]]
+
+frame_layout_mutations = [[sg.Checkbox('Move element', key='Move element', default=True)],
+                          [sg.Checkbox('2-Opt', key='2-Opt', default=True)]]
+
+tsp_right_upper = [[
+                    sg.Frame('Generators', frame_layout_generators, pad=((25, 0), (0, 0))),
+                    sg.Frame('Mutations', frame_layout_mutations, pad=((25, 0), (0, 0))),
+                    sg.Frame('Node control', frame_layout_node_buttons, pad=((25, 0), (0, 0))),
+                    ]]
+
+path_controls = [[sg.Checkbox('Move points', key='move points', pad=(None, (10, 0)), default=True),
+                  sg.Checkbox('Animate construction', key='Animate construction', pad=((20, 0), (10, 0)),
+                              default=True, enable_events=True)],
+
+                 [sg.Checkbox('Show labels', key='show_labels', default=True, pad=((0, 0), (10, 0))),
+                  sg.Checkbox('Show lengths', key='show_lengths', default=False, pad=((20, 0), (10, 0)))]
+                 ]
+
+# gui_left_upper is from core.ga
 tsp_gui_left_upper = gui_left_upper + [
 
                       [sg.Text('Nbr points', pad=((0, 5), (10, 0))),
-                       # sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
-                       #           size=(10, 20))
-                       sg.Slider(key='nbr_points', range=(5, 200), default_value=5, orientation='horizontal',
-                                 size=(10, 20))
-                       ],
+                       sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
+                                 size=(10, 20))],
 
-                      [sg.Checkbox('Move points', key='move_points', pad=(None, (10, 0)), default=False)],
-
-                      [sg.Checkbox('Show labels', key='show_labels', default=True, pad=((0, 0), (10, 0))),
-                       sg.Checkbox('Show lengths', key='show_lengths', default=False, pad=((20, 0), (10, 0)))]
-
-    ]
+                      [sg.Frame('Path controls', path_controls, pad=(None, (10, 0)))]
+                                       ]
 
 
 if __name__ == "__main__":
     from core.agent import PyLogo
-    # gui_left_upper is from core.ga
-    PyLogo(TSP_World, 'TSP', tsp_gui_left_upper, gui_right_upper=tsp_right_upper, agent_class=TSP_Agent, bounce=True)
+    PyLogo(TSP_World, 'TSP', tsp_gui_left_upper, gui_right_upper=tsp_right_upper,
+           agent_class=TSP_Agent, bounce=True, auto_setup=False)

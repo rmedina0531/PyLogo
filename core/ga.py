@@ -98,8 +98,8 @@ class Individual:
     def compute_fitness(self) -> float:
         pass
 
-    def covers(self, other):
-        return self == other
+    def duplicates(self, other):
+        return self.chromosome == other.chromosome
 
     def cx_all_diff(self, other: Individual) -> Tuple[Individual, Individual]:
         """
@@ -153,8 +153,8 @@ class GA_World(World):
         sorted_population = self.sort_population(population)
         comparison_individual = sorted_population[0]
         for i in range(1, len(sorted_population)):
-            if comparison_individual.covers(sorted_population[i]):
-                sorted_population[i] = self.gen_individual()
+            if sorted_population[i].duplicates(comparison_individual):
+                sorted_population[i] = self.gen_new_individual()
             else:
                 comparison_individual = sorted_population[i]
         sorted_population = self.sort_population(sorted_population)
@@ -162,8 +162,9 @@ class GA_World(World):
 
     # noinspection PyNoneFunctionAssignment
     def generate_2_children(self):
-        """ Generate two children and put them into the population. """
-
+        """
+        Generate two children and put them into the population.
+        """
         tourn_size = gui_get('tourn_size')
 
         parent_1_indx: int = self.select_gene_index(self.BEST, tourn_size)
@@ -173,7 +174,7 @@ class GA_World(World):
         parent_2 = self.population[parent_2_indx]
 
         if parent_1 == parent_2:
-            parent_2 = self.gen_individual()
+            parent_2 = self.gen_new_individual()
 
         # Some percent of the time, mutate the parents without mating them.
         # This lets the better individuals get mutated directly.
@@ -181,7 +182,12 @@ class GA_World(World):
                              parent_1.mate_with(parent_2)
 
         child_1_mutated: Individual = child_1.mutate()
+        if child_1_mutated in self.population:
+            child_1_mutated = self.gen_new_individual()
+
         child_2_mutated: Individual = child_2.mutate()
+        if child_2_mutated in self.population:
+            child_2_mutated = self.gen_new_individual()
 
         # The population is not immutable. We change it by writing new individuals into it.
         dest_1_indx: int = self.select_gene_index(self.WORST, tourn_size)
@@ -195,7 +201,37 @@ class GA_World(World):
 
     @staticmethod
     def gen_individual() -> Individual:
+        """ Override in subclass. """
         pass
+
+    def gen_initial_population(self):
+        """
+        Generate the initial population. gen_new_individual uses gen_individual from the subclass.
+        """
+        # Must do it this way because self.gen_new_individual checks to see if each new individual
+        # is already in self.population.
+        self.population = []
+        for i in range(self.pop_size):
+            self.population.append(self.gen_new_individual())
+
+    def gen_new_individual(self) -> Individual:
+        """
+        Generate a new individual. Ensure, if possible, that the new individual is unique,
+        i.e., not already in the population. If that's not possible (because the population
+        is too large for the gene pool and virtually all gene combinations are already in
+         use) generate a random new individual and warn the user.
+
+        """
+        # Try for a unique individual.
+        for _ in range(10):
+            new_ind = self.gen_individual()
+            if new_ind not in self.population:
+                # Found a unique individual, return it.
+                return new_ind
+        else:
+            # Did not find a unique individual. Warn the user and generate a random individual.
+            print(f"Population too large for gene pool. Can't guarantee unique individuals.")
+            return self.gen_individual()
 
     def get_best_individual(self) -> Individual:
         best_index = self.select_gene_index(self.BEST, len(self.population))
@@ -213,20 +249,12 @@ class GA_World(World):
                 self.population = self.population[:new_pop_size]
             else:
                 for i in range(self.pop_size, new_pop_size):
-                    self.population.append(self.gen_individual())
+                    self.population.append(self.gen_new_individual())
             self.pop_size = new_pop_size
             self.resume_ga()
             return
         else:
             super().handle_event(event)
-
-    def initial_population(self) -> List[Individual]:
-        """
-        Generate the initial population. Use gen_individual from the subclass.
-        """
-        population = [self.gen_individual() for _ in range(self.pop_size)]
-        new_population = self.eliminate_duplicates(population)
-        return new_population
 
     def resume_ga(self):
         """ 
@@ -280,7 +308,8 @@ class GA_World(World):
         # It may not be None if it was set by the specific problem's setup function.
         if self.pop_size is None:
             self.pop_size = gui_get('pop_size')
-        self.population = self.initial_population()
+
+        self.gen_initial_population()
 
         self.tournament_size = gui_get('tourn_size')
         if GA_World.fitness_target is None:
@@ -298,9 +327,6 @@ class GA_World(World):
         # Loop for self.pop_size//2 steps since we generate two individuals for each time around.
         for i in range(self.pop_size//2):
             self.generate_2_children()
-
-        if gui_get('elim_dups'):
-            self.population = self.eliminate_duplicates(self.population)
 
         self.generations += 1
         self.set_results()
@@ -321,7 +347,7 @@ gui_left_upper = [
                     ],
 
                    [sg.Text('Population size\n(must be even)', pad=((0, 5), (20, 0))),
-                    sg.Slider(key='pop_size', range=(10, 1000), resolution=10, default_value=10,
+                    sg.Slider(key='pop_size', range=(5, 500), resolution=5, default_value=10,
                               orientation='horizontal', size=(10, 20), enable_events=True)
                     ],
 
@@ -334,9 +360,6 @@ gui_left_upper = [
                     sg.Combo(key='Max generations', values=[10, 50, 100, 250, 500, float('inf')], default_value=100,
                              pad=(None, (10, 0)))
                     ],
-
-                   [sg.Checkbox('Eliminate duplicates', key='elim_dups', default=True,
-                                pad=((0, 0), (10, 0)))],
 
                    [sg.Text('Prob no mating', pad=((0, 5), (10, 0))),
                     sg.Slider(key='no_mating', range=(1, 100), resolution=1, default_value=10,
