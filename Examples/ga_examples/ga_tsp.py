@@ -15,6 +15,7 @@ from core.sim_engine import draw_links, gui_get, gui_set, SimEngine
 from core.world_patch_block import World
 
 ##added imports
+import copy
 from itertools import permutations
 
 
@@ -110,26 +111,70 @@ class TSP_Chromosome(Chromosome):
 
 
         #construct the spanning tree
-        spanning_tree = TSP_Chromosome.minimum_spanning_tree(GA_World.gene_pool)
+        spanning_tree = TSP_World.minimum_spanning_tree_links()
 
-        #using depth first add nodes to the path
+        best_path = None
+        for node in TSP_World.agents:
+            #copy into a new list we can edit without affecting the on in TSP world
+            spanning_tree_copy = [x for x in spanning_tree]
+            path = TSP_Chromosome.spanning_tree_route(spanning_tree_copy, node)
+            if best_path == None:
+                best_path = path
+            else:
+                if TSP_Chromosome.path_length(best_path) > TSP_Chromosome.path_length(path):
+                    best_path = path
+
+        print(best_path)
+        return best_path
 
 
+        # print(spanning_tree)
+        # return TSP_Chromosome.random_path()
 
-        return TSP_Chromosome.random_path()
+    @staticmethod
+    def path_length(path):
+        path_length = 0
+
+        for i, node in enumerate(path):
+            path_length += node.distance_to(path[(i+1)%len(path)])
+
+        return path_length
+
+
+    @staticmethod
+    def spanning_tree_route(spanning_tree, root):
+        route = []
+        route.append(root)
+        children = []
+
+        #find the children and take note of which edges to remove
+        to_remove = []
+        for edge in spanning_tree:
+            if edge.includes(root):
+                to_remove.append(edge)
+                children.append(edge.other_side(root))
+
+        #remove the edges with the root
+        for edge in to_remove:
+            spanning_tree.remove(edge)
+
+        for child in children:
+            route = route + TSP_Chromosome.spanning_tree_route(spanning_tree, child)
+        return route
+
 
 ##My method of spanning tree
-    @staticmethod
-    def minimum_spanning_tree(vertices):
-        # make a dictionary of all the possible edges and their lengths
-        all_edges = [set(x) for x in set(map(frozenset, list(permutations(vertices, 2))))]
-        print(all_edges)
-        distances = [list(x)[0].distance_to(list(x)[1]) for x in all_edges]
-        print(distances)
-        edge_data = list(zip(all_edges, distances))
-        #sort by shortest distance first
-        edge_data.sort(key=lambda x: x[1])
-        print(edge_data)
+    # @staticmethod
+    # def minimum_spanning_tree(vertices):
+    #     # make a dictionary of all the possible edges and their lengths
+    #     all_edges = [set(x) for x in set(map(frozenset, list(permutations(vertices, 2))))]
+    #     print(all_edges)
+    #     distances = [list(x)[0].distance_to(list(x)[1]) for x in all_edges]
+    #     print(distances)
+    #     edge_data = list(zip(all_edges, distances))
+    #     #sort by shortest distance first
+    #     edge_data.sort(key=lambda x: x[1])
+    #     print(edge_data)
 
     def add_gene_to_chromosome(self, orig_fitness: float, gene):
         """ Add gene to the chromosome to minimize the cycle distance. """
@@ -255,10 +300,11 @@ class TSP_Individual(Individual):
 
 
 class TSP_World(GA_World):
+    msp_links = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.msp_links = None
+        # self.msp_links = None
 
     def create_node(self):
         new_point = self.create_random_agent(color=Color('white'), shape_name='node', scale=1)
@@ -326,6 +372,11 @@ class TSP_World(GA_World):
             generator_name = dict(getmembers(new_individual.generator))['__name__']
             print(f'{i}. {generator_name} {"(no display)" if generator_name == "random_path" else ""}')
             if generator_name != 'random_path':
+                #test stuff
+                # print('elements in min spanning tree')
+                # test = self.minimum_spanning_tree_links()
+                # print(type(test[0]))
+                # print(test[0])
                 msp_links = self.minimum_spanning_tree_links() if generator_name == 'spanning_tree_path' else []
                 path_links = new_individual.chromosome.link_chromosome()
                 for lnk in path_links:
@@ -349,10 +400,16 @@ class TSP_World(GA_World):
         else:
             super().handle_event(event)
 
-    def minimum_spanning_tree_links(self):
-        if not self.msp_links:
-            self.msp_links = minimum_spanning_tree(list(GA_World.gene_pool))
-        return self.msp_links
+    # def minimum_spanning_tree_links(self):
+    #     if not self.msp_links:
+    #         self.msp_links = minimum_spanning_tree(list(GA_World.gene_pool))
+    #     return self.msp_links
+
+    @staticmethod
+    def minimum_spanning_tree_links():
+        if not TSP_World.msp_links:
+            TSP_World.msp_links = minimum_spanning_tree(list(GA_World.gene_pool))
+        return TSP_World.msp_links
 
     @staticmethod
     def random_velocity(limit=0.75):

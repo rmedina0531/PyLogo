@@ -1,9 +1,7 @@
 # Import the string constants you need (mainly keys) as well as classes and gui elements
 from core.graph_framework import (CLUSTER_COEFF, Graph_Node, Graph_World, PATH_LENGTH, TBD, graph_left_upper,
                                   graph_right_upper)
-from core.sim_engine import gui_set
-
-                                  graph_right_upper, RANDOM, LINK_PROB, RING, STAR, WHEEL, SMALL_WORLD, PREF_ATTACHMENT,
+from core.sim_engine import (gui_set, graph_right_upper, RANDOM, LINK_PROB, RING, STAR, WHEEL, SMALL_WORLD, PREF_ATTACHMENT,
                                   GRAPH_TYPE, CREATE_NODE)
 from core.link import Link, link_exists
 from core.sim_engine import SimEngine
