@@ -12,6 +12,9 @@ from core.pairs import Velocity
 from core.sim_engine import gui_get, gui_set
 from core.world_patch_block import World
 
+##added imports
+from itertools import permutations
+
 
 class TSP_Agent(Agent):
     """ An agent is a point on the screen, not a GA individual. """
@@ -20,6 +23,9 @@ class TSP_Agent(Agent):
         return self.id < other.id
 
     def __str__(self):
+        return str(self.id)
+
+    def __repr__(self):
         return str(self.id)
 
     @property
@@ -43,10 +49,12 @@ class TSP_Link(Link):
 
 
 class TSP_Chromosome(Chromosome):
+
     """
     An individual consists primarily of a sequence of Genes, called
     a chromosome. We create a class for it simply because it's a
     convenient place to store methods.
+    A Chromosome is a list og genes. A gene is an agent in world.agents
     """
     @staticmethod
     def factory(chromo):
@@ -97,9 +105,29 @@ class TSP_Chromosome(Chromosome):
         Constructs a minimum spanning tree. Then does a DFS of the tree, adding
         elements in the order encountered as long as they were not added earlier.
         """
+
+
+
+        #construct the spanning tree
+        spanning_tree = TSP_Chromosome.minimum_spanning_tree(GA_World.gene_pool)
+
+        #using depth first add nodes to the path
+
+
+
         return TSP_Chromosome.random_path()
 
-
+    @staticmethod
+    def minimum_spanning_tree(vertices):
+        # make a dictionary of all the possible edges and their lengths
+        all_edges = [set(x) for x in set(map(frozenset, list(permutations(vertices, 2))))]
+        print(all_edges)
+        distances = [list(x)[0].distance_to(list(x)[1]) for x in all_edges]
+        print(distances)
+        edge_data = list(zip(all_edges, distances))
+        #sort by shortest distance first
+        edge_data.sort(key=lambda x: x[1])
+        print(edge_data)
 
     def add_gene_to_chromosome(self, orig_fitness: float, gene):
         """ Add gene to the chromosome to minimize the cycle distance. """
@@ -292,7 +320,9 @@ tsp_right_upper = [
 tsp_gui_left_upper = gui_left_upper + [
 
                       [sg.Text('Nbr points', pad=((0, 5), (10, 0))),
-                       sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
+                       # sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
+                       #           size=(10, 20))
+                       sg.Slider(key='nbr_points', range=(5, 200), default_value=5, orientation='horizontal',
                                  size=(10, 20))
                        ],
 
