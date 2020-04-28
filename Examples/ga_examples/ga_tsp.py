@@ -94,14 +94,11 @@ class TSP_Chromosome(Chromosome):
         current_agent = choice(list(TSP_World.gene_pool))
         greedy_path = [current_agent]
         while len(greedy_path) < len(list(TSP_World.gene_pool)):
-            print(f"Greedy Path Length: {len(greedy_path)}\nGene Length: {len(list(TSP_World.gene_pool))}")
             # test = [x.length for x in all_links]
             link_lengths = [[x.other_side(current_agent), x.length] for x in all_links if x.includes(current_agent) and x.other_side(current_agent) not in greedy_path]
             #sort them by shortest length first
             link_lengths.sort(key=lambda x:x[1])
-            print(link_lengths)
             #add the node of the greedy path
-            print(link_lengths[0][0])
             greedy_path.append(link_lengths[0][0])
             current_agent = link_lengths[0][0]
 
