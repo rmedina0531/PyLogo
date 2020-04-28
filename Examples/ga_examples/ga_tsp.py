@@ -83,55 +83,31 @@ class TSP_Chromosome(Chromosome):
 
         Currently written to call random_path. You should replace that with an actual greedy algorithm.
         """
-        # all_edges = set(map(frozenset, list(permutations(TSP_World.gene_pool, 2))))
-        # all_edges =list(permutations(TSP_World.gene_pool, 2))
-        # all_links = []
-        # for edge in all_edges:
-        #     all_links.append(Link(edge[0], edge[1], add_to_world_links=False))
-        #
-        # #start at random agent
-        # current_agent = choice(list(TSP_World.gene_pool))
-        # greedy_path = [current_agent]
-        # while len(greedy_path) < len(TSP_World.gene_pool):
-        #     link_lengths = [[x.other_side(current_agent), x.length()] for x in all_links if x.includes(current_agent) and x.other_side(current_agent) not in greedy_path]
-        #     #sort them by shortest length first
-        #     link_lengths.sort(key=lambda x:x[1])
-        #     #add the node of the greedy path
-        #     greedy_path.append(link_lengths[0])
-        #
-        # print(greedy_path)
-        # all_edges = set(map(frozenset, list(permutations(TSP_World.gene_pool, 2))))
 
-        # all_edges = [set(x) for x in all_edges]
-        # edge_info = dict.fromkeys(all_edges, 0)
-        # print(all_edges)
-        # edge_lengths = {}
-        # edge_on = {}
-        # for edge in all_edges:
-        #     edge_lengths[edge] = list(edge)[0].distance_to(list(edge)[1])
-        #     edge_on[edge] = False
-        # edge_info = dict.fromkeys(all_edges, [list(agent)[0].distance_to(list(agent)[1]) for agent in all_edges])
+        #make a list of all the possible links, dont add them to the world links list
+        all_edges = set(map(frozenset, list(permutations(TSP_World.gene_pool, 2))))
+        all_links = []
+        for edge in all_edges:
+            all_links.append(Link(list(edge)[0], list(edge)[1], add_to_world_links=False))
 
-        #find the shortest path
-        # shortest_edge = None
-        # for edge in edge_lengths:
-        #     if shortest_edge is None:
-        #         edge = shortest_edge
-        #
-        #     else:
-        #         if list(edge)[0].distance_to(list(edge)[1] < list(shortest_edge)[0].distance_to(list(shortest_edge)[1]:
-        #             shortest_edge = edge
+        #start at random agent
+        current_agent = choice(list(TSP_World.gene_pool))
+        greedy_path = [current_agent]
+        while len(greedy_path) < len(list(TSP_World.gene_pool)):
+            print(f"Greedy Path Length: {len(greedy_path)}\nGene Length: {len(list(TSP_World.gene_pool))}")
+            # test = [x.length for x in all_links]
+            link_lengths = [[x.other_side(current_agent), x.length] for x in all_links if x.includes(current_agent) and x.other_side(current_agent) not in greedy_path]
+            #sort them by shortest length first
+            link_lengths.sort(key=lambda x:x[1])
+            print(link_lengths)
+            #add the node of the greedy path
+            print(link_lengths[0][0])
+            greedy_path.append(link_lengths[0][0])
+            current_agent = link_lengths[0][0]
 
-        #pick a random one to start
-        # start = choice(TSP_World.gene_pool)
-
-        #find all edges with the start variable
-
-        # print(edge_info)
-
-        # edge_info = [[set(edge), TSP_Chromosome.path_length(edge)] for edge in all_edges]
-        # print(edge_info)
-        return TSP_Chromosome.random_path()
+        print(greedy_path)
+        return greedy_path
+        # return TSP_Chromosome.random_path()
 
     @staticmethod
     def random_path() -> List[Gene]:
@@ -429,10 +405,10 @@ class TSP_World(GA_World):
                 for lnk in path_links:
                     lnk.color = Color('red')
                 # World.links = set()
-                draw_links(msp_links + path_links, World.links)
-                # draw_links(msp_links, World.links)
+                # draw_links(msp_links + path_links, World.links)
+                draw_links(msp_links, World.links)
                 # World.links = set()
-                # draw_links(path_links, World.links)
+                draw_links(path_links, World.links)
             self.population.append(new_individual)
 
     def handle_event(self, event):
@@ -539,7 +515,7 @@ path_controls = [[sg.Checkbox('Move points', key='move points', pad=(None, (10, 
 tsp_gui_left_upper = gui_left_upper + [
 
                       [sg.Text('Nbr points', pad=((0, 5), (10, 0))),
-                       sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
+                       sg.Slider(key='nbr_points', range=(5, 200), default_value=6, orientation='horizontal',
                                  size=(10, 20))],
 
                       [sg.Frame('Path controls', path_controls, pad=(None, (10, 0)))]
