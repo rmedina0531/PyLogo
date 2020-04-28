@@ -84,22 +84,22 @@ class TSP_Chromosome(Chromosome):
         Currently written to call random_path. You should replace that with an actual greedy algorithm.
         """
         # all_edges = set(map(frozenset, list(permutations(TSP_World.gene_pool, 2))))
-        all_edges =list(permutations(TSP_World.gene_pool, 2))
-        all_links = []
-        for edge in all_edges:
-            all_links.append(Link(edge[0], edge[1], add_to_world_links=False))
-
-        #start at random agent
-        current_agent = choice(list(TSP_World.gene_pool))
-        greedy_path = [current_agent]
-        while len(greedy_path) < len(TSP_World.gene_pool):
-            link_lengths = [[x.other_side(current_agent), x.length()] for x in all_links if x.includes(current_agent) and x.other_side(current_agent) not in greedy_path]
-            #sort them by shortest length first
-            link_lengths.sort(key=lambda x:x[1])
-            #add the node of the greedy path
-            greedy_path.append(link_lengths[0])
-
-        print(greedy_path)
+        # all_edges =list(permutations(TSP_World.gene_pool, 2))
+        # all_links = []
+        # for edge in all_edges:
+        #     all_links.append(Link(edge[0], edge[1], add_to_world_links=False))
+        #
+        # #start at random agent
+        # current_agent = choice(list(TSP_World.gene_pool))
+        # greedy_path = [current_agent]
+        # while len(greedy_path) < len(TSP_World.gene_pool):
+        #     link_lengths = [[x.other_side(current_agent), x.length()] for x in all_links if x.includes(current_agent) and x.other_side(current_agent) not in greedy_path]
+        #     #sort them by shortest length first
+        #     link_lengths.sort(key=lambda x:x[1])
+        #     #add the node of the greedy path
+        #     greedy_path.append(link_lengths[0])
+        #
+        # print(greedy_path)
         # all_edges = set(map(frozenset, list(permutations(TSP_World.gene_pool, 2))))
 
         # all_edges = [set(x) for x in all_edges]
@@ -428,10 +428,11 @@ class TSP_World(GA_World):
                 path_links = new_individual.chromosome.link_chromosome()
                 for lnk in path_links:
                     lnk.color = Color('red')
-                World.links = set()
-                # draw_links(msp_links + path_links, World.links)
-                draw_links(msp_links, World.links)
-                draw_links(path_links, World.links)
+                # World.links = set()
+                draw_links(msp_links + path_links, World.links)
+                # draw_links(msp_links, World.links)
+                # World.links = set()
+                # draw_links(path_links, World.links)
             self.population.append(new_individual)
 
     def handle_event(self, event):
