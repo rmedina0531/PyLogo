@@ -205,6 +205,9 @@ def draw_links(links, world_links):
             break
         if not paused:
             lnk = links.pop(0)
+            if lnk in world_links:
+                world_links.remove(lnk)
+                SimEngine.draw_world()
             world_links.add(lnk)
             SimEngine.draw_world()
         sleep(0.60)

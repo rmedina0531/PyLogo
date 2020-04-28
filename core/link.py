@@ -94,6 +94,9 @@ class Link:
     def __str__(self):
         return f'{self.agent_1} {"-->" if self.directed else "<-->"} {self.agent_2}'
 
+    def __repr__(self):
+        return f'{self.agent_1} {"-->" if self.directed else "<-->"} {self.agent_2}'
+
     def draw(self):
         # gui.draw_line(self.agent_1.rect.center, self.agent_2.rect.center, line_color=self.color, width=self.width)
         gui.draw_line(self.agent_1.center_pixel, self.agent_2.center_pixel, line_color=self.color, width=self.width)
