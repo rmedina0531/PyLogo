@@ -515,7 +515,7 @@ path_controls = [[sg.Checkbox('Move points', key='move points', pad=(None, (10, 
 tsp_gui_left_upper = gui_left_upper + [
 
                       [sg.Text('Nbr points', pad=((0, 5), (10, 0))),
-                       sg.Slider(key='nbr_points', range=(5, 200), default_value=6, orientation='horizontal',
+                       sg.Slider(key='nbr_points', range=(5, 200), default_value=15, orientation='horizontal',
                                  size=(10, 20))],
 
                       [sg.Frame('Path controls', path_controls, pad=(None, (10, 0)))]
