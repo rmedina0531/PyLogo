@@ -1,16 +1,17 @@
 
 from copy import copy
-from random import random, uniform
+from random import choices, random, uniform
 from typing import List
 
 from pygame import Color
 
 from core.agent import Agent
 from core.ga import GA_World
-from core.link import Link
+from core.link import Link, hash_object
 from core.pairs import Velocity
 from core.sim_engine import gui_get
 from core.world_patch_block import World
+
 from ga_and_aco_examples.ga_tsp import order_elements
 
 
@@ -34,7 +35,20 @@ class ACO_Agent(Agent):
 
 class ACO_Link(Link):
 
+    # The following are all very similar colors. Take your pick. Or select another one.
     best_link_color = (100, 150, 255)
+    # best_link_color = Color('steelblue1')      # (99, 184, 255, 255)
+    # best_link_color = Color('steelblue2')      # (92, 172, 238, 255)
+    # best_link_color = Color('skyblue')         # (135, 206, 235, 255)
+    # best_link_color = Color('skyblue1')        # (135, 206, 255, 255)
+    # best_link_color = Color('skyblue2')        # (126, 192, 238, 255)
+    # best_link_color = Color('skyblue3')        # (108, 166, 205, 255)
+    # best_link_color = Color('cornflowerblue')  # (100, 149, 237, 255)
+    # best_link_color = Color('deepskyblue2')    # (0, 178, 238, 255)
+    # best_link_color = Color('lightskyblue2')   # (164, 211, 238, 255)
+    # best_link_color = Color('lightskyblue3')   # (141, 182, 205, 255)
+    # best_link_color = Color('cadetblue2')      # (142, 229, 238, 255)
+    # best_link_color = Color('cadetblue3')      # (122, 197, 205, 255)
 
     def __init__(self, *args, from_city=None, to_city=None, **kwargs):
         super().__init__(*args, **kwargs)

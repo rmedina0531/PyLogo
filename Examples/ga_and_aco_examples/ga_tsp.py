@@ -9,14 +9,28 @@ from pygame import Color
 import core.gui as gui
 from core.agent import Agent
 from core.ga import Chromosome, GA_World, Gene, Individual, gui_left_upper
-from core.link import Link, minimum_spanning_tree, seq_to_links
+from core.link import draw_links, Link, minimum_spanning_tree, seq_to_links
 from core.pairs import Velocity
-from core.sim_engine import draw_links, gui_get, gui_set, SimEngine
+from core.sim_engine import gui_get, gui_set, SimEngine
 from core.world_patch_block import World
 
 ##added imports
 import copy
 from itertools import permutations
+
+
+def order_elements(elt_list):
+    """
+    Rotate and possibly reverse the elt_list so that city A comes first
+    and the city that follows city A is less than the city that precedes it.
+    """
+    first_index = min(range(len(elt_list)), key=lambda i: elt_list[i])
+    # In the second case, must leave the end index as None. If set to -1, it will
+    # be taken as len(chromo)-1. The slice will produce the empty list.
+    revised = elt_list[first_index:] + elt_list[:first_index] \
+        if elt_list[(first_index + 1) % len(elt_list)] < elt_list[(first_index - 1)] else \
+        elt_list[first_index::-1] + elt_list[len(elt_list) - 1:first_index:-1]
+    return revised
 
 
 class TSP_Agent(Agent):
@@ -62,13 +76,8 @@ class TSP_Chromosome(Chromosome):
     """
     @staticmethod
     def factory(chromo):
-        first_index = min(range(len(chromo)), key=lambda i: chromo[i])
-        # In the second case, must leave the end index as None. If set to -1, it will
-        # be taken as len(chromo)-1. The slice will produce the empty list.
-        revised = chromo[first_index:] + chromo[:first_index] \
-                      if chromo[(first_index+1) % len(chromo)] < chromo[(first_index-1)] else \
-                  chromo[first_index::-1] + chromo[len(chromo)-1:first_index:-1]
-        new_chromo = TSP_Chromosome(revised)
+        ordered_chromo = order_elements(chromo)
+        new_chromo = TSP_Chromosome(ordered_chromo)
         return new_chromo
 
     def __str__(self):
@@ -83,7 +92,7 @@ class TSP_Chromosome(Chromosome):
         and extends that path to the nearest neighboring point until all the points
         are included.
 
-        Currently written to call random_path. You should replace that with an actual greedy algorithm.
+        Currently written to call random_path. You should replace that with a greedy algorithm.
         """
 
         #make a list of all the possible links, dont add them to the world links list
@@ -128,6 +137,8 @@ class TSP_Chromosome(Chromosome):
         Generates a path derived from a minimum spanning tree of the Genes.
         Constructs a minimum spanning tree. Then does a DFS of the tree, adding
         elements in the order encountered as long as they were not added earlier.
+
+        Currently written to call random_path. You should replace that with a spanning_tree algorithm.
         """
 
 
@@ -153,6 +164,7 @@ class TSP_Chromosome(Chromosome):
         # print(spanning_tree)
         # return TSP_Chromosome.random_path()
 
+    # End functions to generate initial TSP paths
     @staticmethod
     def path_length(path):
         path_length = 0
@@ -339,7 +351,7 @@ class TSP_World(GA_World):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.msp_links = None
+        self.msp_links = None
 
     def create_node(self):
         new_point = self.create_random_agent(color=Color('white'), shape_name='node', scale=1)
@@ -409,53 +421,15 @@ class TSP_World(GA_World):
             if gui_get('Animate construction'):
                 print(f'{i}. {generator_name} {"(no display)" if generator_name == "random_path" else ""}')
             if generator_name != 'random_path':
-                #test stuff
-                # print('elements in min spanning tree')
-                # test = self.minimum_spanning_tree_links()
-                # print(type(test[0]))
-                # print(test[0])
                 msp_links = self.minimum_spanning_tree_links() if generator_name == 'spanning_tree_path' else []
                 path_links = seq_to_links(new_individual.original_sequence, TSP_Link)
                 if gui_get('Animate construction'):
                     for lnk in path_links:
                         lnk.set_color(Color('yellow' if lnk in msp_links else 'red'))
-                    World.links = set()
-                    draw_links(msp_links + path_links, World.links)
+                    # World.links = set()
+                    # draw_links(msp_links + path_links, World.links)
+                    draw_links(msp_links + path_links)
             self.population.append(new_individual)
-
-
-    #original version
-    # def gen_initial_population(self):
-    #     """
-    #     Generate the initial population. gen_new_individual uses gen_individual from the subclass.
-    #     """
-    #     # Must do it this way because self.gen_new_individual checks to see if each new individual
-    #     # is already in self.population.
-    #     self.population = []
-    #     for i in range(self.pop_size):
-    #         new_individual = self.gen_new_individual()
-    #         assert isinstance(new_individual, TSP_Individual)
-    #         assert isinstance(new_individual.chromosome, TSP_Chromosome)
-    #         generator_name = dict(getmembers(new_individual.generator))['__name__']
-    #         print(f'{i}. {generator_name} {"(no display)" if generator_name == "random_path" else ""}')
-    #         if generator_name != 'random_path':
-    #             #test stuff
-    #             # print('elements in min spanning tree')
-    #             # test = self.minimum_spanning_tree_links()
-    #             # print(type(test[0]))
-    #             # print(test[0])
-    #             msp_links = self.minimum_spanning_tree_links() if generator_name == 'spanning_tree_path' else []
-    #             path_links = new_individual.chromosome.link_chromosome()
-    #             for lnk in path_links:
-    #                 lnk.color = Color('red')
-    #             # World.links = set()
-    #             # draw_links(msp_links + path_links, World.links)
-    #             draw_links(msp_links, World.links)
-    #             # World.links = set()
-    #             draw_links(path_links, World.links)
-    #         self.population.append(new_individual)
-
-
 
     def handle_event(self, event):
         if event.endswith('Node'):
