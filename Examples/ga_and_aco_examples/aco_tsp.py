@@ -135,7 +135,6 @@ class ACO_World(GA_World):
         """
         From a random starting point, return a list of links that
         makes a cycle from that starting point back to itself.
-
         If best is True, always follow the link with the highest weight.
         Otherwise follow links probabilistically based on their weights.
         """
@@ -231,7 +230,6 @@ class ACO_World(GA_World):
     def update_pheromone_levels(self, tour: List[ACO_Link]):
         """
         Update the links in this tour based on how good the tour is.
-
         The following is an outline of what I did. You don't have to follow thay approach.
         """
 
