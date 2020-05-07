@@ -14,6 +14,8 @@ from core.world_patch_block import World
 
 from ga_and_aco_examples.ga_tsp import order_elements
 
+#added imports
+from numpy.random import choice
 
 class ACO_Agent(Agent):
     """ The agents are the cities. """
@@ -23,6 +25,9 @@ class ACO_Agent(Agent):
 
     def __str__(self):
         return self.label
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def label(self):
@@ -94,6 +99,8 @@ class ACO_Link(Link):
         """
         return str(round(self.pheromone_level)) if gui_get('show_phero_levels') else None
 
+    def __repr__(self):
+        return f'{self.agent_1}<--->{self.agent_2}'
 
 class ACO_World(GA_World):
 
@@ -147,15 +154,32 @@ class ACO_World(GA_World):
 
         tour = []
         while unvisited_cities:
-            """ You write the loop body. """
-            ...
+            #find all links with the current city and are in unvisited cities
+            unv_links = [l for l in World.links if l.includes(current_city) and l.other_side(current_city) in unvisited_cities]
+            total_pheramone = sum([l.pheromone_level for l in unv_links])
+            probabilities = [l.pheromone_level/total_pheramone for l in unv_links]
 
+            #pick one with weighted distribution using pheramone
+            found_link = choice(unv_links, 1, probabilities)[0]
+            found_link.from_city = current_city
+            found_link.to_city = found_link.other_side(current_city)
+            # print(f'Found link: {found_link}')
+
+            #add link to tour
+            tour.append(found_link)
+            current_city = found_link.to_city
+            unvisited_cities.remove(current_city)
         """ 
         Don't forget the final link back to the start city. 
         DON'T create a new link. One already exists. Find it. 
         """
-        final_link = ...
+        #should only return a single element we pull it out of the list
+        final_link = [l for l in World.links if (l.agent_1 == start_city and l.agent_2 == tour[-1].to_city) or
+                      (l.agent_2 == start_city and l.agent_1 == tour[-1].to_city)][0]
+        final_link.from_city = tour[-1].to_city
+        final_link.to_city = start_city
         tour.append(final_link)
+        # print(tour)
 
         (final_link.from_city, final_link.to_city) = (current_city, start_city)
         tour_length = round(self.total_dist(tour))
@@ -168,9 +192,13 @@ class ACO_World(GA_World):
         best_tour_links_list = [self.generate_a_tour(best=True) for _ in range(5)]
         best_tour_links = min(best_tour_links_list, key=lambda tour: self.total_dist(tour) )
         self.best_tour_length = round(self.total_dist(best_tour_links))
-
+        print(f'Best Tour Links: {best_tour_links}')
+        for l in best_tour_links:
+            print(f'From City: {l.from_city}, To City: {l.to_city}')
         city_sequence = [lnk.from_city for lnk in best_tour_links]
+        print(f'City Sequence: {city_sequence}')
         best_tour_cities = order_elements(city_sequence)
+        print(f'Best Tour Cities: {best_tour_cities}')
         # Is this tour better than the one on the previous step?
         if ACO_World.best_tour_cities != best_tour_cities:
             for lnk in World.links:
@@ -248,7 +276,7 @@ class ACO_World(GA_World):
         # I made it a function of how the current tour compares to the curent best tour.
         # 'update_weight' puts a weight on how much a good tour is considered important.
 
-        raw_increment = ...
+        raw_increment = 10
 
         for lnk in tour:
             lnk.pheromone_level += min(max_increment(lnk), raw_increment)
