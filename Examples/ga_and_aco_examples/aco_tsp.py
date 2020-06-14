@@ -17,6 +17,9 @@ from ga_and_aco_examples.ga_tsp import order_elements
 #added imports
 from numpy.random import choice
 
+#for testing
+import sys
+
 class ACO_Agent(Agent):
     """ The agents are the cities. """
 
@@ -154,15 +157,24 @@ class ACO_World(GA_World):
 
         tour = []
         while unvisited_cities:
-            #find all links with the current city and are in unvisited cities
-            unv_links = [l for l in World.links if l.includes(current_city) and l.other_side(current_city) in unvisited_cities]
-            total_pheramone = sum([l.pheromone_level for l in unv_links])
-            probabilities = [l.pheromone_level/total_pheramone for l in unv_links]
+            unv_links = [l for l in World.links if
+                         l.includes(current_city) and l.other_side(current_city) in unvisited_cities]
 
-            #pick one with weighted distribution using pheramone
-            found_link = choice(unv_links, 1, probabilities)[0]
-            found_link.from_city = current_city
-            found_link.to_city = found_link.other_side(current_city)
+            if best:
+                # best_tour_links = min(best_tour_links_list, key=lambda tour: self.total_dist(tour))
+                found_link = max(unv_links, key=lambda x: x.pheromone_level)
+
+            else:
+                #find all links with the current city and are in unvisited cities
+                total_pheramone = sum([l.pheromone_level for l in unv_links])
+                probabilities = [l.pheromone_level/total_pheramone for l in unv_links]
+
+                #pick one with weighted distribution using pheramone
+                found_link = choice(unv_links, 1, probabilities)[0]
+
+            # found_link.from_city = current_city
+            # found_link.to_city = found_link.other_side(current_city)
+            (found_link.from_city, found_link.to_city) = (current_city, found_link.other_side(current_city))
             # print(f'Found link: {found_link}')
 
             #add link to tour
@@ -179,33 +191,65 @@ class ACO_World(GA_World):
         final_link.from_city = tour[-1].to_city
         final_link.to_city = start_city
         tour.append(final_link)
+        # print(f'Tour: {tour}')
         # print(tour)
 
         (final_link.from_city, final_link.to_city) = (current_city, start_city)
         tour_length = round(self.total_dist(tour))
         if tour_length < self.best_tour_length:
             self.best_tour_length = tour_length
+
+        # if not self.valid_tour(tour):
+        # if False:
+        #     print('#####################Tour Generation Error###########################')
+        #     print(f'start city: {start_city}')
+        #     print(f'Tour: {tour}')
+        #     for l in tour:
+        #         print(f'From city: {l.from_city}, To City: {l.to_city}')
+            # sys.exit()
+
         return tour
+
+    def valid_tour(self, cities):
+        for city in cities:
+            count = 0
+            start = cities.index(city)
+            for i in range(start, len(cities)):
+                if cities[i] == city:
+                    count += 1
+                    if count > 1:
+                        return False
+        return True
+
 
     def mark_best_tour(self):
         """ Mark the links in the best tour. """
         best_tour_links_list = [self.generate_a_tour(best=True) for _ in range(5)]
         best_tour_links = min(best_tour_links_list, key=lambda tour: self.total_dist(tour) )
         self.best_tour_length = round(self.total_dist(best_tour_links))
-        print(f'Best Tour Links: {best_tour_links}')
-        for l in best_tour_links:
-            print(f'From City: {l.from_city}, To City: {l.to_city}')
+
         city_sequence = [lnk.from_city for lnk in best_tour_links]
-        print(f'City Sequence: {city_sequence}')
+
         best_tour_cities = order_elements(city_sequence)
-        print(f'Best Tour Cities: {best_tour_cities}')
+        # print(f'Best Tour Cities: {best_tour_cities}')
         # Is this tour better than the one on the previous step?
         if ACO_World.best_tour_cities != best_tour_cities:
             for lnk in World.links:
                 lnk.is_best = False
             for lnk in best_tour_links:
                 lnk.is_best = True
+
             print(f"{''.join([str(city) for city in best_tour_cities])}")
+
+            #####for testing, remove when done
+            if not self.valid_tour(best_tour_cities):
+                print('##################Computation Error#########################')
+                print(f'Best Tour Links: {best_tour_links}')
+                for l in best_tour_links:
+                    print(f'From City: {l.from_city}, To City: {l.to_city}')
+                print(f'City Sequence: {city_sequence}')
+                print(f'Best Tour Cities: {best_tour_cities}')
+                sys.exit()
             ACO_World.best_tour_cities = best_tour_cities
 
     def move_cities(self):
@@ -221,8 +265,11 @@ class ACO_World(GA_World):
         """ Make sure pheromones are between Min_pheromone and 100. """
         max_pheromone_level = max(lnk.pheromone_level for lnk in World.links)
         normalization_factor = 100/max_pheromone_level
+        # normalization_factor = 1
         for lnk in World.links:
+            # print(f'before norm: {lnk.pheromone_level}, link:{lnk}')
             lnk.pheromone_level = max(gui_get('Min_pheromone'), normalization_factor * lnk.pheromone_level)
+            # print(f'after norm: {lnk.pheromone_level}, link:{lnk}')
 
     @staticmethod
     def random_velocity():
@@ -275,11 +322,22 @@ class ACO_World(GA_World):
         #
         # I made it a function of how the current tour compares to the curent best tour.
         # 'update_weight' puts a weight on how much a good tour is considered important.
+        #constant/length of path
+        # print(f'Tour length: {tour_length}')
+        # raw_increment = (2000**4)/(tour_length**2)
+        #q range (100,1000)
+        q = 80
 
-        raw_increment = 10
+        # base tour length / tour length * gui_get('update_weight')/10
+        # raw_increment = self.best_tour_length/tour_length * gui_get('update_weight')/10
+        raw_increment = q / tour_length
+        # print(f'Raw Increment: {raw_increment}')
+
 
         for lnk in tour:
             lnk.pheromone_level += min(max_increment(lnk), raw_increment)
+            # print(f'Max Increment: {max_increment(lnk)}')
+            # print(f'Increasing Pheramone levels: {lnk} Increemnt: {min(max_increment(lnk), raw_increment)}, NewValue: {lnk.pheromone_level}')
 
 
 # ############################################## Define GUI ############################################## #
