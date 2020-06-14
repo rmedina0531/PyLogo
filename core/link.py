@@ -47,14 +47,11 @@ class Link:
     def __str__(self):
         return f'{self.agent_1} {"-->" if self.directed else "<-->"} {self.agent_2}'
 
-    def __repr__(self):
-        return f'{self.agent_1} {"-->" if self.directed else "<-->"} {self.agent_2}'
-
     def draw(self):
         gui.draw_line(self.agent_1.center_pixel, self.agent_2.center_pixel, line_color=self.color, width=self.width)
-        if (self.label) is not None:
+        if (my_label := self.label) is not None:
             # Pass the label to avoid computing it twice.
-            self.draw_label(self.label)
+            self.draw_label(my_label)
 
     def draw_label(self, my_label):
         offset = int(0.5*gui.PATCH_SIZE)
