@@ -2,12 +2,6 @@ import os
 from typing import Tuple, Union
 
 import PySimpleGUI as sg
-import pygame as pg
-from pygame.color import Color
-from pygame.draw import line
-from pygame.font import SysFont
-from pygame.rect import Rect
-from pygame.surface import Surface
 
 # By importing this file itself, can avoid the use of globals
 # noinspection PyUnresolvedReferences
@@ -113,38 +107,31 @@ FPS_VALUES = values = [1, 3, 6, 10, 15, 25, 40, 60]
 WINDOW: sg.PySimpleGUI.Window
 
 
-# The following are from pygame.
-SCREEN: Surface
-SCREEN_COLOR = 'gray19'
-FONT: SysFont
-
-
-# These pygame functions draw to the SCREEN, which is a pygame Surface.
-def blit(image: Surface, rect: Union[Rect, Tuple]):
-    gui.SCREEN.blit(image, rect)
-
-
 def draw(agent, shape_name):
     if shape_name in ['circle', 'node']:
         radius = round(BLOCK_SPACING()/2)*agent.scale if shape_name == 'circle' else 3
-        # pg.draw.circle(gui.SCREEN, agent.color, agent.rect.center, int(radius), 0)
-        pg.draw.circle(gui.SCREEN, agent.color, agent.center_pixel.as_int(), int(radius), 0)
+        # pg.draw.circle(gui.SCREEN, agent.color, agent.center_pixel.as_int(), int(radius), 0)
+        #return the ID so the agent associated with the drawn shape has a reference to its ID on the GRAPH
+        return gui.GRAPH.DrawCircle(agent.center_pixel.as_int(), int(radius), fill_color=agent.color)
+
     else:
         print(f"Don't know how to draw a {shape_name}.")
 
 
 def draw_label(label, text_center, obj_center, line_color, background='white'):
-    text = gui.FONT.render(label, True, Color('black'), Color(background))
-    # offset = Block.patch_text_offset if isinstance(self, Patch) else Block.agent_text_offset
-    # text_center = Pixel_xy((self.rect.x + offset, self.rect.y + offset))
-    gui.blit(text, text_center)
+    label_ID = {}
+    label_ID['text_id'] = gui.GRAPH.DrawText(label, text_center)
     # line_color = Color('white') if isinstance(self, Patch) and self.color == Color('black') else self.color
     if line_color is not None:
-        gui.draw_line(start_pixel=obj_center, end_pixel=text_center, line_color=line_color)
+        # gui.draw_line(start_pixel=obj_center, end_pixel=text_center, line_color=line_color)
+        label_ID['line_id'] = gui.draw_line(obj_center, text_center, line_color=line_color)
+
+    return label_ID
 
 
-def draw_line(start_pixel, end_pixel, line_color: Color = Color('white'), width=1):
-    line(gui.SCREEN, line_color, start_pixel, end_pixel, width)
+def draw_line(start_pixel, end_pixel, line_color='white', width=1):
+    # line(gui.SCREEN, line_color, start_pixel, end_pixel, width)
+    gui.GRAPH.DrawLine(start_pixel, end_pixel, color=line_color, width=width)
 
 
 class SimpleGUI:
@@ -170,15 +157,16 @@ class SimpleGUI:
         # All these gui.<variable> elements are globals in this file.
         gui.WINDOW = self.make_window(caption, gui_left_upper, gui_right_upper=gui_right_upper,
                                       clear=clear, bounce=bounce, fps=fps)
-        pg.init()
-        gui.FONT = SysFont(None, int(1.5 * gui.BLOCK_SPACING()))
+        # pg.init()
+        # gui.FONT = SysFont(None, int(1.5 * gui.BLOCK_SPACING()))
 
         # All graphics are drawn to gui.SCREEN, which is a global variable.
-        gui.SCREEN = pg.display.set_mode(self.screen_shape_width_height)
+        # gui.SCREEN = pg.display.set_mode(self.screen_shape_width_height)
 
-    @staticmethod
-    def fill_screen():
-        gui.SCREEN.fill(pg.Color(gui.SCREEN_COLOR))
+    # @staticmethod
+    # def fill_screen():
+        # gui.SCREEN.fill(pg.Color(gui.SCREEN_COLOR))
+        # gui.SCREEN.fill(pg.Color('green'))
 
     def make_window(self, caption, gui_left_upper, gui_right_upper=None, clear=None, bounce=True, fps=None):
         """
@@ -230,9 +218,9 @@ class SimpleGUI:
 
         # graph is a drawing area, a screen on which the model is portrayed, i.e., the patches and the agents.
         # It consists mainly of a TKCanvas.
-        graph = sg.Graph(self.screen_shape_width_height, lower_left_pixel_xy, upper_right_pixel_xy,
-                         background_color='black', key='-GRAPH-', enable_events=True, drag_submits=True)
-        col2 = gui_right_upper + [[graph]]
+        gui.GRAPH = sg.Graph(self.screen_shape_width_height, lower_left_pixel_xy, upper_right_pixel_xy,
+                         background_color='red', key='-GRAPH-', enable_events=True, drag_submits=True)
+        col2 = gui_right_upper + [[gui.GRAPH]]
 
         # layout is the actual layout of the window. The stuff above organizes it into component parts.
         # col1 is the control buttons, sliders, etc.
@@ -244,9 +232,5 @@ class SimpleGUI:
         window = sg.Window(caption, layout, margins=(5, 20), use_default_focus=False, grab_anywhere=False,
                            return_keyboard_events=True, finalize=True)
 
-        # -------------- Magic code to integrate PyGame with tkinter -------
-        w_id = graph.TKCanvas.winfo_id( )
-        os.environ['SDL_WINDOWID'] = str(w_id)
-        os.environ['SDL_VIDEODRIVER'] = 'windib'  # change this to 'x11' to make it work on Linux
 
         return window
