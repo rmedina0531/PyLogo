@@ -13,7 +13,6 @@ import core.gui as gui
 # Importing the file itself eliminates the need for a globals declaration
 # noinspection PyUnresolvedReferences
 import core.world_patch_block as world
-from core.gui import SHAPES
 from core.pairs import Pixel_xy, RowCol, center_pixel
 from core.utils import get_class_name
 
@@ -48,18 +47,16 @@ class Block:
 
     # The actual drawing (blit and draw_line) takes place in core.gui.
     def draw(self, shape_name=None):
-        if self.label:
-            self.draw_label()
-        if isinstance(self, Patch) or shape_name in SHAPES:
-            self.rect.center = self.center_pixel
-            # self.rect = Rect(center=self.rect.center)
-
+        if isinstance(self, Patch):
+            gui.draw_patch(self)
         else:
+            if self.label:
+                self.draw_label()
             gui.draw(self, shape_name=shape_name)
 
     def draw_label(self):
         offset = Block.patch_text_offset if isinstance(self, Patch) else Block.agent_text_offset
-        text_center = Pixel_xy((self.rect.x + offset, self.rect.y + offset))
+        text_center = Pixel_xy((self.center_pixel.x + offset, self.center_pixel.y + offset))
         line_color = None if offset == 0 else \
                      'white' if isinstance(self, Patch) and self.color == 'black' else self.color
         obj_center = self.center_pixel
@@ -75,11 +72,11 @@ class Block:
 
     def set_color(self, color):
         self.color = color
-        self.image.fill(color)
+        # self.image.fill(color)
 
 
 class Patch(Block):
-    def __init__(self, row_col: RowCol, color=Color('black')):
+    def __init__(self, row_col: RowCol, color='black'):
         super().__init__(row_col.patch_to_center_pixel(), color)
         self.row_col = row_col
         self.agents = None

@@ -7,7 +7,6 @@ from pygame.time import Clock
 import core.gui as gui
 from core.gui import FPS, GOSTOP, GO_ONCE, SimpleGUI
 
-
 class SimEngine:
 
     auto_setup = None
@@ -45,7 +44,7 @@ class SimEngine:
         """ Fill the screen with the background color, draw the world, and update the display. """
         # SimEngine.simple_gui.fill_screen()
         SimEngine.world.draw()
-        pg.display.update()
+        # pg.display.update()
 
     @staticmethod
     def gui_get(key):
@@ -126,7 +125,7 @@ class SimEngine:
         SimEngine.auto_setup = auto_setup
 
         # Let events come through pygame to this level.
-        pg.event.set_grab(False)
+        # pg.event.set_grab(False)
 
         while SimEngine.event not in [self.ESCAPE, self.q, self.Q, self.CTRL_D, self.CTRL_d]:
 
