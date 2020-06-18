@@ -43,7 +43,7 @@ class SimEngine:
     @staticmethod
     def draw_world():
         """ Fill the screen with the background color, draw the world, and update the display. """
-        SimEngine.simple_gui.fill_screen()
+        # SimEngine.simple_gui.fill_screen()
         SimEngine.world.draw()
         pg.display.update()
 

@@ -2,11 +2,12 @@ import os
 from typing import Tuple, Union
 
 import PySimpleGUI as sg
-
+from math import floor
 # By importing this file itself, can avoid the use of globals
 # noinspection PyUnresolvedReferences
 import core.gui as gui
-
+from core.world_patch_block import Patch
+from core.clock import Clock
 # Assumes that all Blocks are square with side BLOCK_SIDE and one pixel between them.
 # PATCH_SIZE should be odd so that there is a center pixel: (HALF_PATCH_SIZE(), HALF_PATCH_SIZE()).
 # Assumes that the upper left corner is at (relative) (0, 0).
@@ -30,12 +31,17 @@ GO_ONCE = 'go once'
 GOSTOP = 'GoStop'
 
 # Since it's used as a default value, can't be a list. A tuple works just as well.
-SHAPES = {NETLOGO_FIGURE: ((1, 1), (0.5, 0), (0, 1), (0.5, 3/4)),
-          SQUARE: ((1, 1), (1, 0), (0, 0), (0, 1)),
-          STAR: ((1, 1), (0, 0), (0.5, 0.5), (0, 1), (1, 0), (0.5, 0.5), (0, 0.5), (1, 0.5), (0.5, 0.5),
-                   (0.5, 0), (0.5, 1), (0.5, 0.5)),
-          }
 
+# SHAPES = {NETLOGO_FIGURE: ((1, 1), (0.5, 0), (0, 1), (0.5, 3/4)),
+#           SQUARE: ((1, 1), (1, 0), (0, 0), (0, 1)),
+#           STAR: ((1, 1), (0, 0), (0.5, 0.5), (0, 1), (1, 0), (0.5, 0.5), (0, 0.5), (1, 0.5), (0.5, 0.5),
+#                    (0.5, 0), (0.5, 1), (0.5, 0.5)),
+#           }
+#redifined to make the shape around a center pixel at 0,0
+#add polygon functionality to draw and shapes
+SHAPES = {SQUARE: (-.5, -5, .5, .5),
+          NETLOGO_FIGURE: (.5,.5,0,-.5,-.5,.5,0,.25)
+          }
 
 KNOWN_FIGURES = sorted(list(SHAPES.keys()) + [CIRCLE, NODE])
 
@@ -108,12 +114,19 @@ WINDOW: sg.PySimpleGUI.Window
 
 
 def draw(agent, shape_name):
-    if shape_name in ['circle', 'node']:
+    if shape_name in [CIRCLE, NODE]:
         radius = round(BLOCK_SPACING()/2)*agent.scale if shape_name == 'circle' else 3
         # pg.draw.circle(gui.SCREEN, agent.color, agent.center_pixel.as_int(), int(radius), 0)
         #return the ID so the agent associated with the drawn shape has a reference to its ID on the GRAPH
         return gui.GRAPH.DrawCircle(agent.center_pixel.as_int(), int(radius), fill_color=agent.color)
-
+    elif isinstance(agent, Patch):
+        # Rect((0, 0), (gui.PATCH_SIZE, gui.PATCH_SIZE))
+        return gui.Graph.DrawRectangle(agent.center_pixel - floor(gui.PATCH_SIZE/2), agent.center_pixel - floor(gui.PATCH_SIZE/2),
+                                agent.center_pixel + floor(gui.PATCH_SIZE/2), agent.center_pixel + floor(gui.PATCH_SIZE/2))
+    elif shape_name in SHAPES:
+        #draw the polygon around the center pixel
+        #make a list of the points of the polygon scaled to the desired image size
+        return gui.Graph.TKCanvas.create_polygon(list(map(lambda x: x*agent.scale, SHAPES[shape_name])))
     else:
         print(f"Don't know how to draw a {shape_name}.")
 
@@ -148,7 +161,7 @@ class SimpleGUI:
         self.SETUP = 'setup'
         self.STOP = 'Stop'
 
-        self.clock = pg.time.Clock()
+        self.clock = Clock()
 
         self.caption = caption
 

@@ -5,9 +5,9 @@ from math import sqrt
 from typing import Tuple
 
 import numpy as np
-from pygame.color import Color
-from pygame.rect import Rect
-from pygame.surface import Surface
+# from pygame.color import Color
+# from pygame.rect import Rect
+# from pygame.surface import Surface
 
 import core.gui as gui
 # Importing the file itself eliminates the need for a globals declaration
@@ -26,13 +26,16 @@ class Block:
     agent_text_offset = int(1.5*gui.PATCH_SIZE)
     patch_text_offset = -int(1.0*gui.PATCH_SIZE)
 
-    def __init__(self, center_pixel: Pixel_xy, color=Color('black')):
+    def __init__(self, center_pixel: Pixel_xy, color='black'):
         self.center_pixel: Pixel_xy = center_pixel
-        self.rect = Rect((0, 0), (gui.PATCH_SIZE, gui.PATCH_SIZE))
+
+        #self.rect = Rect((0, 0), (gui.PATCH_SIZE, gui.PATCH_SIZE))
         # noinspection PyTypeChecker
         sum_pixel: Pixel_xy = center_pixel + Pixel_xy((1, 1))
-        self.rect.center = sum_pixel
-        self.image = Surface((self.rect.w, self.rect.h))
+
+        #self.rect.center = sum_pixel
+        #self.image = Surface((self.rect.w, self.rect.h))
+
         self.color = self.base_color = color
         self._label = None
         self.highlight = None
@@ -50,7 +53,7 @@ class Block:
         if isinstance(self, Patch) or shape_name in SHAPES:
             self.rect.center = self.center_pixel
             # self.rect = Rect(center=self.rect.center)
-            gui.blit(self.image, self.rect)
+
         else:
             gui.draw(self, shape_name=shape_name)
 
@@ -58,8 +61,8 @@ class Block:
         offset = Block.patch_text_offset if isinstance(self, Patch) else Block.agent_text_offset
         text_center = Pixel_xy((self.rect.x + offset, self.rect.y + offset))
         line_color = None if offset == 0 else \
-                     Color('white') if isinstance(self, Patch) and self.color == Color('black') else self.color
-        obj_center = self.rect.center
+                     'white' if isinstance(self, Patch) and self.color == 'black' else self.color
+        obj_center = self.center_pixel
         gui.draw_label(self.label, text_center, obj_center, line_color)
 
     @property
