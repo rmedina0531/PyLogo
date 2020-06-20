@@ -3,11 +3,11 @@ from math import sqrt
 from random import choice, randint
 from statistics import mean
 
-import pygame as pg
-import pygame.transform as pgt
-from pygame import Surface
-from pygame.color import Color
-from pygame.colordict import THECOLORS
+# import pygame as pg
+# import pygame.transform as pgt
+# from pygame import Surface
+# from pygame.color import Color
+# from pygame.colordict import THECOLORS
 
 import core.gui as gui
 import core.pairs as pairs
@@ -29,19 +29,18 @@ def is_acceptable_color(rgb):
 
 
 # These are colors defined by pygame that satisfy is_acceptable_color() above.
-PYGAME_COLORS = [(name, rgba[:3]) for (name, rgba) in THECOLORS.items() if is_acceptable_color(rgba[:3])]
+# PYGAME_COLORS = [(name, rgba[:3]) for (name, rgba) in THECOLORS.items() if is_acceptable_color(rgba[:3])]
 
 # These are NetLogo primary colors -- more or less.
-NETLOGO_PRIMARY_COLORS = [(color_name, Color(color_name))
-                          for color_name in ['gray', 'red', 'orange', 'brown', 'yellow', 'green', 'limegreen',
-                                             'turquoise', 'cyan', 'skyblue3', 'blue', 'violet', 'magenta', 'pink']]
+NETLOGO_PRIMARY_COLORS = ['gray', 'red', 'orange', 'brown', 'yellow', 'green', 'limegreen',
+                                             'turquoise', 'cyan', 'skyblue3', 'blue', 'violet', 'magenta', 'pink']
 
 SQRT_2 = sqrt(2)
 
 
 class Agent(Block):
 
-    color_palette = choice([NETLOGO_PRIMARY_COLORS, PYGAME_COLORS])
+    color_palette = NETLOGO_PRIMARY_COLORS
 
     half_patch_pixel = pairs.Pixel_xy((HALF_PATCH_SIZE(), HALF_PATCH_SIZE()))
 
@@ -51,22 +50,25 @@ class Agent(Block):
 
     some_agent_changed = False
 
-    def __init__(self, center_pixel=None, color=None, scale=1.4, shape_name='netlogo_figure'):
+    def __init__(self, center_pixel=None, color=None, scale=1.4, shape_name=gui.NETLOGO_FIGURE):
         # Can't make this a default value because pairs.CENTER_PIXEL()
         # isn't defined when the default values are compiled
+
+        #generate the agent at center of graph if no center pixel has been declared
         if center_pixel is None:
             center_pixel = pairs.center_pixel()
 
         if color is None:
             # Select a color at random from the color_palette
-            color = choice(Agent.color_palette)[1]
+            color = choice(Agent.color_palette)
 
         super().__init__(center_pixel, color)
 
         self.scale = scale
 
         self.shape_name = shape_name
-        self.base_image = self.create_base_image()
+        # self.base_image = self.create_base_image()
+        self.image_id = self.draw(shape_name)
 
         self.id = Agent.id
         Agent.id += 1
@@ -124,30 +126,30 @@ class Agent(Block):
 
         return dxdy
 
-    def create_base_image(self):
-        base_image = self.create_blank_base_image()
+    # def create_base_image(self):
+    #     base_image = self.create_blank_base_image()
+    #
+    #     factor = self.scale * PATCH_SIZE
+    #     if self.shape_name in SHAPES:
+    #         # Instead of using pygame's smoothscale to scale the image, scale the polygon instead.
+    #         scaled_shape = [(v[0]*factor,  v[1]*factor) for v in SHAPES[self.shape_name]]
+    #         pg.draw.polygon(base_image, self.color, scaled_shape, 0)
+    #     return base_image
 
-        factor = self.scale * PATCH_SIZE
-        if self.shape_name in SHAPES:
-            # Instead of using pygame's smoothscale to scale the image, scale the polygon instead.
-            scaled_shape = [(v[0]*factor,  v[1]*factor) for v in SHAPES[self.shape_name]]
-            pg.draw.polygon(base_image, self.color, scaled_shape, 0)
-        return base_image
-
-    def create_blank_base_image(self):
-
-        # Give the agent a larger Surface (by sqrt(2)) to work with since it may rotate.
-        surface_size = XY((self.rect.width, self.rect.height))*SQRT_2
-        blank_base_image = Surface(surface_size)
-
-        # This sets the rectangle to be transparent.
-        # Otherwise it would be black and would cover nearby agents.
-        # Even though it's a method of Surface, it can also take a Surface parameter.
-        # If the Surface parameter is not given, PyCharm complains.
-        # noinspection PyArgumentList
-        blank_base_image = blank_base_image.convert_alpha()
-        blank_base_image.fill((0, 0, 0, 0))
-        return blank_base_image
+    # def create_blank_base_image(self):
+    #
+    #     # Give the agent a larger Surface (by sqrt(2)) to work with since it may rotate.
+    #     surface_size = XY((self.rect.width, self.rect.height))*SQRT_2
+    #     blank_base_image = Surface(surface_size)
+    #
+    #     # This sets the rectangle to be transparent.
+    #     # Otherwise it would be black and would cover nearby agents.
+    #     # Even though it's a method of Surface, it can also take a Surface parameter.
+    #     # If the Surface parameter is not given, PyCharm complains.
+    #     # noinspection PyArgumentList
+    #     blank_base_image = blank_base_image.convert_alpha()
+    #     blank_base_image.fill((0, 0, 0, 0))
+    #     return blank_base_image
 
     def current_patch(self) -> Patch:
         row_col: RowCol = (self.center_pixel).pixel_to_row_col()
@@ -155,6 +157,8 @@ class Agent(Block):
         return patch
 
     def delete(self):
+        #TODO
+        #will probably need a call to remove the actual image from the graph object
         self.current_patch().remove_agent(self)
         World.agents.remove(self)
         World.links -= {lnk for lnk in World.links if lnk.includes(self)}
@@ -171,10 +175,14 @@ class Agent(Block):
 
     def draw(self, shape_name=None):
         # No point in rotating circles or nodes. Only rotate SHAPES.
-        if self.shape_name in SHAPES:
-            self.image = pgt.rotate(self.base_image, -self.heading)
-            self.rect = self.image.get_rect(center=self.center_pixel)
-        super().draw(shape_name=self.shape_name)
+        #TODO - Rotation has been disabled and needs to be implememnted
+
+        # if self.shape_name in SHAPES:
+        #     self.image = pgt.rotate(self.base_image, -self.heading)
+        #     self.rect = self.image.get_rect(center=self.center_pixel)
+        # super().draw(shape_name=self.shape_name)
+
+        return gui.draw(self, gui.NETLOGO_FIGURE)
 
     def face_xy(self, xy: Pixel_xy):
         new_heading = (self.center_pixel).heading_toward(xy)
@@ -263,7 +271,8 @@ class Agent(Block):
 
     def set_color(self, color):
         self.color = color
-        self.base_image = self.create_base_image()
+        gui.set_properties(self, fill=self.color)
+        # self.base_image = self.create_base_image()
 
     def set_heading(self, heading):
         # Keep heading as an int in range(360)
@@ -279,17 +288,20 @@ class Agent(Block):
 
     # noinspection PyTypeChecker
     def take_animation_step(self):
-        if not self.animation_target:
-            return
+        #TODO
+        pass
 
-        delta = self.animation_target - self.center_pixel
-        if abs(delta.x) > 0 or abs(delta.y) > 0:
-            Agent.key_step_done = False
-        self.move_agent(delta)
-
-        if abs(self.distance_to_pixel(self.animation_target)) < 0.5:
-            self.move_to_xy(self.animation_target)
-            self.animation_target = None
+        # if not self.animation_target:
+        #     return
+        #
+        # delta = self.animation_target - self.center_pixel
+        # if abs(delta.x) > 0 or abs(delta.y) > 0:
+        #     Agent.key_step_done = False
+        # self.move_agent(delta)
+        #
+        # if abs(self.distance_to_pixel(self.animation_target)) < 0.5:
+        #     self.move_to_xy(self.animation_target)
+        #     self.animation_target = None
 
     def turn_left(self, delta_angles):
         self.turn_right(-delta_angles)

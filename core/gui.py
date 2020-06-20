@@ -151,6 +151,8 @@ def draw_line(start_pixel, end_pixel, line_color='white', width=1):
     # line(gui.SCREEN, line_color, start_pixel, end_pixel, width)
     gui.GRAPH.DrawLine(start_pixel, end_pixel, color=line_color, width=width)
 
+def set_properties(agent, **kwargs):
+    gui.GRAPH.TKCanvas.itemconfig(agent.image_id, **kwargs)
 
 class SimpleGUI:
 
@@ -162,6 +164,8 @@ class SimpleGUI:
         gui.PATCH_COLS = board_rows_cols[1] if board_rows_cols[1] % 2 == 1 else board_rows_cols[1] + 1
 
         self.EXIT = 'Exit'
+
+        #check to see if this was being used anywhere
         self.GRAPH = '-GRAPH-'
         self.SETUP = 'setup'
         self.STOP = 'Stop'

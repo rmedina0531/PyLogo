@@ -2,7 +2,7 @@ from random import randint
 from typing import Tuple
 
 import PySimpleGUI as sg
-from pygame.color import Color
+# from pygame.color import Color
 
 import core.gui as gui
 from core.sim_engine import gui_get, SimEngine
@@ -13,8 +13,8 @@ from core.world_patch_block import Patch, World
 class OnOffPatch(Patch):
 
     # These are the default colors. They are rgb colors.
-    on_color = Color('white')
-    off_color = Color('black')
+    on_color = 'white'
+    off_color = 'black'
 
     def __init__(self, *args, **kw_args):
         super().__init__(*args, **kw_args)
@@ -23,7 +23,8 @@ class OnOffPatch(Patch):
     def set_on_off(self, is_on):
         is_0_or_space = isinstance(is_on, str) and len(is_on) == 1 and is_on in ' 0'
         self.is_on = not is_0_or_space and bool(is_on)
-        self.set_color(OnOffPatch.on_color if self.is_on else OnOffPatch.off_color)
+        _color = OnOffPatch.on_color if self.is_on else OnOffPatch.off_color
+        self.set_color(_color)
 
 
 class OnOffWorld(World):
@@ -44,16 +45,16 @@ class OnOffWorld(World):
         if color_string in {'None', '', None}:
             color_string = default_color_string
         button.update(button_color=(color_string, color_string))
-        color = Color(color_string)
+        color = color_string
         return color
 
     def get_colors(self):
         OnOffPatch.off_color = self.get_color_and_update_button(
                                             self.off_color_chooser,
-                                            default_color_string=rgb_to_hex(OnOffPatch.off_color))
+                                            default_color_string=OnOffPatch.off_color)
         OnOffPatch.on_color = self.get_color_and_update_button(
                                             self.on_color_chooser,
-                                            default_color_string=rgb_to_hex(OnOffPatch.on_color))
+                                            default_color_string=OnOffPatch.on_color)
 
     def handle_event(self, event):
         """

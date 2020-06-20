@@ -1,8 +1,5 @@
 
-from time import sleep
-
-import pygame as pg
-from pygame.time import Clock
+from core.clock import Clock
 
 import core.gui as gui
 from core.gui import FPS, GOSTOP, GO_ONCE, SimpleGUI
@@ -44,6 +41,9 @@ class SimEngine:
         """ Fill the screen with the background color, draw the world, and update the display. """
         # SimEngine.simple_gui.fill_screen()
         SimEngine.world.draw()
+        #probably move the draw method to the gui file
+        gui.GRAPH.TKCanvas.update_idletasks()
+        gui.GRAPH.TKCanvas.update()
         # pg.display.update()
 
     @staticmethod
@@ -126,7 +126,7 @@ class SimEngine:
 
         # Let events come through pygame to this level.
         # pg.event.set_grab(False)
-
+        tick_counter = 0
         while SimEngine.event not in [self.ESCAPE, self.q, self.Q, self.CTRL_D, self.CTRL_d]:
 
             (SimEngine.event, SimEngine.values) = gui.WINDOW.read(timeout=10)
@@ -188,6 +188,8 @@ class SimEngine:
             SimEngine.draw_world()
 
             self.clock.tick(self.idle_fps)
+            tick_counter+=1
+            print(tick_counter)
 
 
 # def draw_links(links, world_links_set, sleep_time=0.6):

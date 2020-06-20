@@ -180,9 +180,9 @@ Velocity.velocity_00 = Velocity((0, 0))
 
 
 def center_pixel():
-    rect = gui.SCREEN.get_rect()
-    cp = Pixel_xy((rect.centerx, rect.centery))
-    return cp
+    return Pixel_xy((gui.SCREEN_PIXEL_WIDTH()/2, gui.SCREEN_PIXEL_HEIGHT()/2))
+    # rect = gui.SCREEN.get_rect()
+    # cp = Pixel_xy((rect.centerx, rect.centery))
 
 
 def heading_and_speed_to_velocity(heading, speed) -> Velocity:

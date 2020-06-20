@@ -38,6 +38,7 @@ class Block:
         self.color = self.base_color = color
         self._label = None
         self.highlight = None
+        self.image_id = None
 
     def distance_to_xy(self, xy: Pixel_xy):
         x_dist = self.center_pixel.x - xy.x
@@ -48,11 +49,11 @@ class Block:
     # The actual drawing (blit and draw_line) takes place in core.gui.
     def draw(self, shape_name=None):
         if isinstance(self, Patch):
-            gui.draw_patch(self)
+            self.image_id = gui.draw_patch(self)
         else:
             if self.label:
-                self.draw_label()
-            gui.draw(self, shape_name=shape_name)
+                self.label_id = self.draw_label()
+            self.image_id = gui.draw(self, shape_name=shape_name)
 
     def draw_label(self):
         offset = Block.patch_text_offset if isinstance(self, Patch) else Block.agent_text_offset
@@ -60,7 +61,7 @@ class Block:
         line_color = None if offset == 0 else \
                      'white' if isinstance(self, Patch) and self.color == 'black' else self.color
         obj_center = self.center_pixel
-        gui.draw_label(self.label, text_center, obj_center, line_color)
+        return gui.draw_label(self.label, text_center, obj_center, line_color)
 
     @property
     def label(self):
@@ -72,6 +73,7 @@ class Block:
 
     def set_color(self, color):
         self.color = color
+        gui.set_properties(self, fill=color)
         # self.image.fill(color)
 
 
